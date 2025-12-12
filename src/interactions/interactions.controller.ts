@@ -1,34 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { InteractionsService } from './interactions.service';
 import { CreateInteractionDto } from './dto/create-interaction.dto';
-import { UpdateInteractionDto } from './dto/update-interaction.dto';
+import { GetInteractionsDto } from './dto/get-interactions.dto';
+import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
+import { GetCommentsDto } from './dto/get-comments.dto';
 
-@Controller('interactions')
+@Controller('/v1/analytics')
 export class InteractionsController {
   constructor(private readonly interactionsService: InteractionsService) {}
 
-  @Post()
-  create(@Body() createInteractionDto: CreateInteractionDto) {
-    return this.interactionsService.create(createInteractionDto);
+  @Post('/create/interaction')
+  createInteraction() {}
+
+  @Post('/interactions')
+  create(@Body() body: GetInteractionsDto) {}
+
+  @Post('/comments')
+  getComments(@Body() body: GetCommentsDto) {
   }
 
-  @Get()
-  findAll() {
-    return this.interactionsService.findAll();
+  @Post('/emoji')
+  getContableEmojiBehavior(@Body() body: GetEmojiTotalDto) {
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.interactionsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateInteractionDto: UpdateInteractionDto) {
-    return this.interactionsService.update(+id, updateInteractionDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.interactionsService.remove(+id);
-  }
 }

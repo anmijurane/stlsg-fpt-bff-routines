@@ -6,7 +6,12 @@ import { PostgresTypeORMModule } from './modules.exports';
 import { InteractionsModule } from './interactions/interactions.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(), PostgresTypeORMModule(), FeedbackModule, InteractionsModule],
+  imports: [
+    ConfigModule.forRoot(),
+    PostgresTypeORMModule(),
+    FeedbackModule,
+    InteractionsModule,
+  ],
   controllers: [],
   providers: [],
 })
