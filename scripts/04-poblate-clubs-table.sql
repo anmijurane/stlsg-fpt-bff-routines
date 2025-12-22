@@ -44,4 +44,5 @@ INSERT INTO clubs (id, name, city, address) VALUES
 ('61b395fb2b', 'Parque Vértice', 'León', NULL),
 ('49fa0060c3', 'Galerias Guadalajara', 'Guadalajara', NULL),
 ('5fdc64fa8d', 'Punto Sur', 'Guadalajara', NULL),
-('98f1370821', 'USA', 'EEUU', NULL);
+('98f1370821', 'USA', 'EEUU', NULL)
+ON CONFLICT (id) DO NOTHING;

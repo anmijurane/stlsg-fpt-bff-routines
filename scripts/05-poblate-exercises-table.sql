@@ -56,4 +56,6 @@ INSERT INTO exercises (id, name, muscle_group, zone) VALUES
 ('e9f2a7b4', 'Sentadilla TRX con salto', 'Cuádriceps/glúteo/femoral', 'Funcional'),
 ('a3b8c1d6', 'Sentadillas', 'Cuádriceps/glúteo/femoral', 'Funcional'),
 ('ia1b2c3d', 'Talones alternados al glúteo', 'Glúteo/femoral', 'Funcional'),
-('b1c5d8e2', 'Tijeras frontales en tapete', 'Abdomen', 'Funcional');
+('b1c5d8e2', 'Tijeras frontales en tapete', 'Abdomen', 'Funcional'),
+('07893b00', 'NO CATALOGADO', 'NO CATALOGADO', 'NO CATALOGADO')
+ON CONFLICT (id) DO NOTHING;
