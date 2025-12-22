@@ -14,4 +14,7 @@ export class Exercises {
 
   @Column({ type: 'text', nullable: false })
   zone: string;
+
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
 }
