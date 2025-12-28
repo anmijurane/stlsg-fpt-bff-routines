@@ -16,7 +16,9 @@ export class InteractionsController {
   }
 
   @Post('/interactions')
-  create(@Body() body: GetInteractionsDto) {}
+  create(@Body() body: GetInteractionsDto) {
+    return this.interactionsService.getInteractions(body);
+  }
 
   @Post('/comments')
   getComments(@Body() body: GetCommentsDto) {

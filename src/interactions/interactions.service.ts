@@ -4,11 +4,15 @@ import { Sessions } from './entities/sessions.entity';
 import { PageViews } from './entities/page_views.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BuilderEvent, EventType, RoutineType, TypeView } from 'src/app-types/interactions';
+import { BuilderEvent, RoutineType, TypeView } from 'src/app-types/interactions';
 import { decodeQueryString } from 'src/utils/decodeQueryString';
 import { Events } from './entities/events.entity';
 import { Exercises } from 'src/common/entities/exercises.entity';
 import { DateTime } from 'luxon';
+import { GetCommentsDto } from './dto/get-comments.dto';
+import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
+import { GetInteractionsDto } from './dto/get-interactions.dto';
+import { Clubs } from 'src/common/entities/clubs.entity';
 
 @Injectable()
 export class InteractionsService {
@@ -16,14 +20,10 @@ export class InteractionsService {
   private logger = new Logger('InteractionsService');
 
   constructor(
-    @InjectRepository(Sessions)
-    private readonly sessionsRepository: Repository<Sessions>,
     @InjectRepository(PageViews)
     private readonly pageViewsRepository: Repository<PageViews>,
     @InjectRepository(Events)
     private readonly eventsRepository: Repository<Events>,
-    @InjectRepository(Exercises)
-    private readonly exercisesRepository: Repository<Exercises>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -34,8 +34,10 @@ export class InteractionsService {
 
     try {
       this.logger.log('CREATE INTERACTION');
-      const date = DateTime.now().setZone('America/Mexico_City');
-      const executeDate = DateTime.fromSQL(date.toSQL()).setZone('UTC');
+      const date = createInteraction?.date ? DateTime.fromISO(createInteraction.date).setZone('America/Mexico_City') : DateTime.now().setZone('America/Mexico_City');
+      const executeDate =  DateTime.fromSQL(date.toSQL()).setZone('UTC')
+
+      console.log(executeDate);
 
       const sessionToInsert = {
         session_ref: createInteraction.session_ref,
@@ -180,7 +182,6 @@ export class InteractionsService {
         query_string: createInteraction.page.query_string,
         routine: page_view.routine,
         level_id: page_view.level_id,
-        visited_at: executeDate.toJSDate(), //TODO: insert date of time zone of club
       });
 
       const pageViewInserted = await queryRunner.manager.save(PageViews, pageViewToInsert);
@@ -227,4 +228,139 @@ export class InteractionsService {
       await queryRunner.release();
     }
   }
+
+  async getInteractions(body: GetInteractionsDto) {
+    try {
+      this.logger.log('GET INTERACTIONS');
+
+      const page = body.pagination?.page || 1;
+      const limit = body.pagination?.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const queryBuilder = this.dataSource
+        .createQueryBuilder()
+        .select([
+          's.slug AS slug',
+          's.club_id AS club_id',
+          'c.name AS club_name',
+          's.session_ref AS session_id',
+          's.user_agent_browser AS user_browser',
+          's.user_agent_os AS user_os',
+          'e.routine AS routine_type',
+          'e.level_id AS routine_level',
+          'e.day_routine AS routine_day',
+          'e.exercise_id AS exercise_id',
+          'e.exercise_name AS exercise_name',
+          'pv.page_path AS page_path',
+          'pv.query_string AS query_string',
+          'pv.visited_at AS visited_at',
+        ])
+        .from(PageViews, 'pv')
+        .innerJoin(Sessions, 's', 's.id = pv.session_id')
+        .leftJoin(Clubs, 'c', 'c.id = s.club_id')
+        .leftJoin(Events, 'e', 'e.page_view_id = pv.id')
+        .leftJoin(Exercises, 'ex', 'ex.id = e.exercise_id');
+
+      if (body.club_id) {
+        queryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+      }
+
+      if (body.session_id) {
+        queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
+      }
+
+      if (body.exercise_id) {
+        queryBuilder.andWhere('e.exercise_id = :exercise_id', { exercise_id: body.exercise_id });
+      }
+
+      if (body.routine?.type) {
+        queryBuilder.andWhere('e.routine = :routine', { routine: body.routine.type });
+      }
+
+      if (body.routine?.level) {
+        queryBuilder.andWhere('e.level_id = :level_id', { level_id: body.routine.level });
+      }
+
+      if (body.routine?.day) {
+        queryBuilder.andWhere('e.day_routine = :day_routine', { day_routine: body.routine.day });
+      }
+
+      if (body.timestamp?.start) {
+        const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss', {
+          zone: 'America/Mexico_City'
+        }).toUTC().toJSDate();
+        
+        queryBuilder.andWhere('pv.visited_at >= :start', { start: startDateUTC });
+      }
+
+      if (body.timestamp?.end) {
+        const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss', {
+          zone: 'America/Mexico_City'
+        }).toUTC().toJSDate();
+        
+        queryBuilder.andWhere('pv.visited_at <= :end', { end: endDateUTC });
+      }
+
+      queryBuilder
+        .orderBy('s.id', 'ASC')
+        .addOrderBy('pv.visited_at', 'ASC')
+        .addOrderBy('e.created_at', 'ASC', 'NULLS LAST');
+
+      const totalItems = await queryBuilder.getCount();
+
+      queryBuilder.offset(skip).limit(limit);
+
+      const rawResults = await queryBuilder.getRawMany();
+
+      const data = rawResults.map((row) => ({
+        slug: row.slug,
+        club_id: row.club_id,
+        club_name: row.club_name,
+        session_id: row.session_id,
+        user: {
+          browser: row.user_browser,
+          os: row.user_os,
+        },
+        routine: {
+          type: row.routine_type,
+          level: row.routine_level,
+          day: row.routine_day,
+        },
+        exercise: {
+          id: row.exercise_id,
+          name: row.exercise_name,
+        },
+        page: `${row.page_path}${row.query_string ? `?${row.query_string}` : ''}`,
+        timestamp: DateTime.fromJSDate(row.visited_at)
+            .setZone('America/Mexico_City')
+            .toFormat('yyyy-MM-dd HH:mm:ss'),
+      }));
+
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return {
+        data,
+        pagination: {
+          total_items_per_page: rawResults.length,
+          total_items: +totalItems,
+          total_pages: +totalPages,
+          current_page: +page,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error getting interactions', error);
+      throw new InternalServerErrorException({
+        status: 500,
+        category: '22',
+        code: 'E_BFF-ROUTINES-500_022',
+        message: `Error getting interactions: ${error.message}`,
+        name: 'E_BFF-ROUTINES-500_022',
+      });
+    }
+  }
+
+  async getComments(body: GetCommentsDto) {}
+
+  async getEmojiTotal(body: GetEmojiTotalDto) {}
 }
+
