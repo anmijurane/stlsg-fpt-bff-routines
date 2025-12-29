@@ -1,3 +1,5 @@
+import { Emoji } from "src/feedback/types";
+
 export interface TimestampI {
   start: string;
   end: string;
@@ -40,3 +42,12 @@ export interface EventBuilder {
 }
 
 export type BuilderEvent = Record<TypeView, () => Promise<{ page_view: PageViewBuilder; event: EventBuilder }>>;
+
+export interface GetCommentsResult {
+  club_id: string;
+  club_name: string;
+  session_id: string;
+  emoji: Emoji;
+  comment: string;
+  visited_at: Date;
+}

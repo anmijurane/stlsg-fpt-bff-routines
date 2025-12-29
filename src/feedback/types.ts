@@ -1,4 +1,4 @@
-export type Emoji = 'happy' | 'neutral' | 'sad';
+export type Emoji = 'happy' | 'neutral' | 'sad' | null;
 
 export interface UserContext {
   ip: string;

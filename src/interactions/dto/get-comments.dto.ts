@@ -5,7 +5,8 @@ import { PaginationI } from "src/app-types/interactions";
 
 export class GetCommentsDto extends CommonRequestInteractionsDto {
   @IsEnum(['happy', 'neutral', 'sad'])
-  emoji: Emoji;
+  @IsOptional()
+  emoji?: Emoji;
 
   @IsObject()
   @IsOptional()

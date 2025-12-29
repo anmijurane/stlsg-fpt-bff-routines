@@ -21,7 +21,6 @@ export class FeedbackController {
     @Body() body: EmojiFeedbackDto,
     @Headers() headers: Record<string, string>,
   ) {
-    console.log('ENTRO AL REQUEST');
     const userContextBase64 = headers['user-context'];
     const userContextJsonRaw = decodeBase64(userContextBase64);
     const userContext = JSON.parse(userContextJsonRaw) as UserContext;
@@ -59,10 +58,6 @@ export class FeedbackController {
         notification: [{ message: 'userContext invalid' }],
       });
     }
-    return await this.feedbackService.addComment(
-      id,
-      body.comment,
-      userContext.session_id,
-    );
+    return await this.feedbackService.addComment(id, body.comment);
   }
 }
