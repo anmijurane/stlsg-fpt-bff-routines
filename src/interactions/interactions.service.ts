@@ -4,7 +4,7 @@ import { Sessions } from './entities/sessions.entity';
 import { PageViews } from './entities/page_views.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BuilderEvent, RoutineType, TypeView } from 'src/app-types/interactions';
+import { BuilderEvent, GetCommentsResult, RoutineType, TypeView } from 'src/app-types/interactions';
 import { decodeQueryString } from 'src/utils/decodeQueryString';
 import { Events } from './entities/events.entity';
 import { Exercises } from 'src/common/entities/exercises.entity';
@@ -13,6 +13,7 @@ import { GetCommentsDto } from './dto/get-comments.dto';
 import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
 import { GetInteractionsDto } from './dto/get-interactions.dto';
 import { Clubs } from 'src/common/entities/clubs.entity';
+import { Feedback } from 'src/feedback/entities/feedback.entity';
 
 @Injectable()
 export class InteractionsService {
@@ -359,8 +360,94 @@ export class InteractionsService {
     }
   }
 
-  async getComments(body: GetCommentsDto) {}
+  async getComments(body: GetCommentsDto) {
+    try {
+      const page = body.pagination?.page || 1;
+      const limit = body.pagination?.limit || 10;
+      const skip = (page - 1) * limit;
 
-  async getEmojiTotal(body: GetEmojiTotalDto) {}
+      const queryBuilder = this.dataSource
+        .createQueryBuilder()
+        .select([
+          's.club_id AS club_id',
+          'c.name AS club_name',
+          's.session_ref AS session_id',
+          'fb.emoji AS emoji',
+          'fb.comment AS comment',
+          'fb.created_at AS visited_at',
+        ])
+        .from(Feedback, 'fb')
+        .innerJoin(Sessions, 's', 's.id = fb.session_id')
+        .leftJoin(Clubs, 'c', 'c.id = s.club_id');
+
+      if (body.club_id) {
+        queryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+      }
+
+      if (body.emoji) {
+        queryBuilder.andWhere('fb.emoji = :emoji', { emoji: body.emoji });
+      }
+
+      if (body.session_id) {
+        queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
+      }
+
+      if (body.timestamp?.start) {
+        const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss', {
+          zone: 'America/Mexico_City'
+        }).toUTC().toJSDate();
+        
+        queryBuilder.andWhere('fb.created_at >= :start', { start: startDateUTC });
+      }
+
+      if (body.timestamp?.end) {
+        const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss', {
+          zone: 'America/Mexico_City'
+        }).toUTC().toJSDate();
+        
+        queryBuilder.andWhere('fb.created_at <= :end', { end: endDateUTC });
+      }
+
+      const totalItems = await queryBuilder.getCount();
+      queryBuilder.offset(skip).limit(limit);
+
+      const rawResults = await queryBuilder.getRawMany<GetCommentsResult>();
+
+      const totalPages = Math.ceil(totalItems / limit);
+      console.log(rawResults[0])
+
+      return {
+        data: rawResults.map((row) => ({
+          club_id: row.club_id,
+          club_name: row.club_name,
+          session_id: row.session_id,
+          emoji: row.emoji,
+          comment: row.comment,
+          timestamp: DateTime.fromJSDate(row.visited_at)
+            .setZone('America/Mexico_City')
+            .toFormat('yyyy-MM-dd HH:mm:ss'),
+        })),
+        pagination: {
+          total_items_per_page: rawResults.length,
+          total_items: +totalItems,
+          total_pages: +totalPages,
+          current_page: +page,
+        },
+      };
+
+    } catch (error) {
+      throw new InternalServerErrorException({
+        status: 500,
+        category: '25',
+        code: 'E_BFF-ROUTINES-500_025',
+        message: `Error getting comments: ${error.message}`,
+        name: 'E_BFF-ROUTINES-500_025',
+      });
+    }
+  }
+
+  async getEmojiTotal(body: GetEmojiTotalDto) {
+
+  }
 }
 

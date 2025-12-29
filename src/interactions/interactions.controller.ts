@@ -22,6 +22,7 @@ export class InteractionsController {
 
   @Post('/comments')
   getComments(@Body() body: GetCommentsDto) {
+    return this.interactionsService.getComments(body);
   }
 
   @Post('/emoji')
