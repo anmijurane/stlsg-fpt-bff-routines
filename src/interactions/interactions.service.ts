@@ -38,8 +38,6 @@ export class InteractionsService {
       const date = createInteraction?.date ? DateTime.fromISO(createInteraction.date).setZone('America/Mexico_City') : DateTime.now().setZone('America/Mexico_City');
       const executeDate =  DateTime.fromSQL(date.toSQL()).setZone('UTC')
 
-      console.log(executeDate);
-
       const sessionToInsert = {
         session_ref: createInteraction.session_ref,
         club_id: createInteraction.club_id,
@@ -183,6 +181,7 @@ export class InteractionsService {
         query_string: createInteraction.page.query_string,
         routine: page_view.routine,
         level_id: page_view.level_id,
+        visited_at: page_view.visited_at
       });
 
       const pageViewInserted = await queryRunner.manager.save(PageViews, pageViewToInsert);
@@ -407,14 +406,10 @@ export class InteractionsService {
         
         queryBuilder.andWhere('fb.created_at <= :end', { end: endDateUTC });
       }
-
       const totalItems = await queryBuilder.getCount();
       queryBuilder.offset(skip).limit(limit);
-
       const rawResults = await queryBuilder.getRawMany<GetCommentsResult>();
-
       const totalPages = Math.ceil(totalItems / limit);
-      console.log(rawResults[0])
 
       return {
         data: rawResults.map((row) => ({
@@ -447,6 +442,79 @@ export class InteractionsService {
   }
 
   async getEmojiTotal(body: GetEmojiTotalDto) {
+
+    try {
+      this.logger.log('GET EMOJI TOTAL');
+
+      const queryBuilder = this.dataSource
+        .createQueryBuilder()
+        .select([
+          's.club_id AS "club_id"',
+          'c.name AS "club_name"',
+          `SUM(CASE WHEN fb.emoji = 'happy' THEN 1 ELSE 0 END) AS happy_count`,
+          `SUM(CASE WHEN fb.emoji = 'neutral' THEN 1 ELSE 0 END) AS neutral_count`,
+          `SUM(CASE WHEN fb.emoji = 'sad' THEN 1 ELSE 0 END) AS sad_count`,
+          'COUNT(*) AS total_feedbacks'
+        ])
+        .from(Feedback, 'fb')
+        .innerJoin(Sessions, 's', 's.id = fb.session_id')
+        .leftJoin(Clubs, 'c', 'c.id = s.club_id');
+
+      if (body.club_id) {
+        queryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+      }
+
+      if (body.session_id) {
+        queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
+      }
+
+      if (body.timestamp?.start) {
+        const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss', {
+          zone: 'America/Mexico_City'
+        }).toUTC().toJSDate();
+        
+        queryBuilder.andWhere('fb.created_at >= :start', { start: startDateUTC });
+      }
+
+      if (body.timestamp?.end) {
+        const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss', {
+          zone: 'America/Mexico_City'
+        }).toUTC().toJSDate();
+        
+        queryBuilder.andWhere('fb.created_at <= :end', { end: endDateUTC });
+      }
+
+      queryBuilder.groupBy('s.club_id');
+      queryBuilder.addGroupBy('c.name');
+
+      const rawResults = await queryBuilder.getRawMany();
+      const results = rawResults.map(row => ({
+        club_id: row.club_id,
+        club_name: row.club_name,
+        happy_count: +row.happy_count,
+        neutral_count: +row.neutral_count,
+        sad_count: +row.sad_count,
+        total_feedbacks: +row.total_feedbacks
+      }))
+
+      return {
+        data: results,
+        pagination: {
+          total_items_per_page: results.length,
+        },
+        notifications: []
+      };
+
+    } catch (error) {
+      this.logger.error('Error getting emoji total', error);
+      throw new InternalServerErrorException({
+        status: 500,
+        category: '26',
+        code: 'E_BFF-ROUTINES-500_026',
+        message: `Error getting emoji total: ${error.message}`,
+        name: 'E_BFF-ROUTINES-500_026',
+      });
+    }
 
   }
 }

@@ -27,6 +27,7 @@ export class InteractionsController {
 
   @Post('/emoji')
   getContableEmojiBehavior(@Body() body: GetEmojiTotalDto) {
+    return this.interactionsService.getEmojiTotal(body);
   }
 
 }
