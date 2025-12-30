@@ -16,3 +16,5 @@ CREATE INDEX IF NOT EXISTS idx_events_exercise_time
 CREATE INDEX IF NOT EXISTS idx_events_routine_level
   ON events (routine, level_id);
 
+CREATE INDEX IF NOT EXISTS idx_credentials_role
+  ON credentials (role_id);

@@ -99,3 +99,33 @@ CREATE TABLE IF NOT EXISTS feedback (
   comment     TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS roles (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS credentials (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  username TEXT,
+  password_hash TEXT,
+  access_key_hash TEXT,
+  active BOOLEAN DEFAULT FALSE,
+
+  valid_from TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ,
+
+  last_used_at TIMESTAMPTZ,
+  uses_count INT DEFAULT 0,
+
+  role_id INT REFERENCES roles (id),
+  notes TEXT,
+
+  disabled_reason TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
