@@ -18,3 +18,15 @@ CREATE INDEX IF NOT EXISTS idx_events_routine_level
 
 CREATE INDEX IF NOT EXISTS idx_credentials_role
   ON credentials (role_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_credentials_username_unique
+  ON credentials (LOWER(username))
+  WHERE username IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_credentials_access_key_hash
+  ON credentials (access_key_hash)
+  WHERE access_key_hash IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_credentials_active_role_expires
+  ON credentials (role_id, expires_at)
+  WHERE active = TRUE;

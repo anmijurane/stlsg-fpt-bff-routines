@@ -27,7 +27,7 @@ INSERT INTO clubs (id, name, city, address) VALUES
 ('5dc0a1b409', 'Angelópolis', 'Puebla', NULL),
 ('7aa8f6d5c3', 'Coacalco', 'Edo de Mex', NULL),
 ('15bd2f6108', 'Acueducto', 'CDMX', NULL),
-('b70f4e2d6a', 'Jardines Xalapa', 'VER', NULL),
+('b70f4e2d6a', 'Jardines Xalapa', 'Veracruz', NULL),
 ('257d3e6a8b', 'Center Plazas', 'Veracruz', NULL),
 ('a49d5f73c4', 'Mixcoac', 'CDMX', NULL),
 ('31b8e2a04f', 'Cumbres 1188', 'CDMX', NULL),
@@ -44,5 +44,9 @@ INSERT INTO clubs (id, name, city, address) VALUES
 ('61b395fb2b', 'Parque Vértice', 'León', NULL),
 ('49fa0060c3', 'Galerias Guadalajara', 'Guadalajara', NULL),
 ('5fdc64fa8d', 'Punto Sur', 'Guadalajara', NULL),
-('98f1370821', 'USA', 'EEUU', NULL)
+('98f1370821', 'USA', 'EEUU', NULL),
+('61480e707c', 'CDMX', 'Gran Sur', NULL),
+('66dab86bf2', 'Acapulco', 'Multiplaza las Palmas', NULL),
+('216428d3f9', 'Edo de Mex', 'Cuatro Caminos', NULL),
+('d6830a6ee4', 'Mérida', 'Canek', NULL),
 ON CONFLICT (id) DO NOTHING;
