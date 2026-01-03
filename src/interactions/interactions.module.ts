@@ -8,6 +8,8 @@ import { Sessions } from './entities/sessions.entity';
 import { Clubs } from 'src/common/entities/clubs.entity';
 import { Exercises } from 'src/common/entities/exercises.entity';
 import { RoutineLevels } from 'src/common/entities/routine_levels.entity';
+import { Role } from 'src/common/entities/role.entity';
+import { Credential } from 'src/common/entities/credential.entity';
 
 @Module({
   controllers: [InteractionsController],
@@ -18,7 +20,9 @@ import { RoutineLevels } from 'src/common/entities/routine_levels.entity';
     Sessions,
     Clubs,
     Exercises,
-    RoutineLevels
+    RoutineLevels,
+    Role,
+    Credential,
   ])],
 })
 export class InteractionsModule {}

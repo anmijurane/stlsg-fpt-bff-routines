@@ -11,12 +11,14 @@ import { Headers } from 'src/common/decorators/raw-headers.decorator';
 import { decodeBase64 } from 'src/utils/decodeBase64';
 import { UserContext } from './types';
 import { UUID } from 'node:crypto';
+import { Auth } from 'src/common/decorators/auth.decorator';
 
 @Controller('feedback')
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
   @Post('/emoji')
+  @Auth('admin', 'creator')
   async create(
     @Body() body: EmojiFeedbackDto,
     @Headers() headers: Record<string, string>,
@@ -44,6 +46,7 @@ export class FeedbackController {
   }
 
   @Post('/comment/:id')
+  @Auth('admin', 'creator')
   async update(
     @Param('id') id: UUID,
     @Body() body: Pick<EmojiFeedbackDto, 'comment'>,
