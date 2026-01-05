@@ -32,7 +32,6 @@ export class FeedbackController {
         notification: [{ message: 'userContext invalid' }],
       });
     }
-    console.log({ rejected: body.rejected, emoji: body.emoji });
     return await this.feedbackService.create({
       comment: body.comment,
       emoji: body.emoji,
@@ -61,6 +60,6 @@ export class FeedbackController {
         notification: [{ message: 'userContext invalid' }],
       });
     }
-    return await this.feedbackService.addComment(id, body.comment);
+    return await this.feedbackService.addComment(userContext.session_id, body.comment);
   }
 }

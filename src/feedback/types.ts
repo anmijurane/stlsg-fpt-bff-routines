@@ -1,9 +1,11 @@
+import { UUID } from "node:crypto";
+
 export type Emoji = 'happy' | 'neutral' | 'sad' | null;
 
 export interface UserContext {
   ip: string;
   user_agent: string;
-  session_id: string;
+  session_id: UUID;
 }
 
 export interface FeedbackDBInsert {
