@@ -48,5 +48,5 @@ INSERT INTO clubs (id, name, city, address) VALUES
 ('61480e707c', 'CDMX', 'Gran Sur', NULL),
 ('66dab86bf2', 'Acapulco', 'Multiplaza las Palmas', NULL),
 ('216428d3f9', 'Edo de Mex', 'Cuatro Caminos', NULL),
-('d6830a6ee4', 'Mérida', 'Canek', NULL),
+('d6830a6ee4', 'Mérida', 'Canek', NULL)
 ON CONFLICT (id) DO NOTHING;
