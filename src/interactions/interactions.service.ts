@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateInteractionDto } from './dto/create-interaction.dto';
 import { Sessions } from './entities/sessions.entity';
 import { PageViews } from './entities/page_views.entity';
@@ -14,6 +14,8 @@ import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
 import { GetInteractionsDto } from './dto/get-interactions.dto';
 import { Clubs } from 'src/common/entities/clubs.entity';
 import { Feedback } from 'src/feedback/entities/feedback.entity';
+import { errors } from 'src/utils/catalog.errors';
+import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest } from './validate_request';
 
 @Injectable()
 export class InteractionsService {
@@ -25,6 +27,10 @@ export class InteractionsService {
     private readonly pageViewsRepository: Repository<PageViews>,
     @InjectRepository(Events)
     private readonly eventsRepository: Repository<Events>,
+    @InjectRepository(Clubs)
+    private readonly clubsRepository: Repository<Clubs>,
+    @InjectRepository(Exercises)
+    private readonly exercisesRepository: Repository<Exercises>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -164,13 +170,7 @@ export class InteractionsService {
       };
 
       if (!Object.keys(builderEvent).includes(typeView)) {
-        throw new InternalServerErrorException({
-          status: 500,
-          category: '21',
-          code: 'E_BFF-ROUTINES-500_021',
-          message: `Type view ${typeView} not found`,
-          name: 'E_BFF-ROUTINES-500_021'
-        });
+        throw new InternalServerErrorException(errors.INTERNAL_002());
       }
 
       const { page_view, event } = await builderEvent[typeView]();
@@ -213,17 +213,11 @@ export class InteractionsService {
       }
 
     } catch (error) {
-       await queryRunner.rollbackTransaction();
-       if (error instanceof InternalServerErrorException) {
-         throw error;
-       }
-       throw new InternalServerErrorException({
-        status: 500,
-        category: '21',
-        code: 'E_BFF-ROUTINES-500_021',
-        message: `Error processing interaction: ${error.message}`,
-        name: 'E_BFF-ROUTINES-500_021'
-      });
+      await queryRunner.rollbackTransaction();
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(errors.INTERNAL_003());
     } finally {
       await queryRunner.release();
     }
@@ -236,6 +230,30 @@ export class InteractionsService {
       const page = body.pagination?.page || 1;
       const limit = body.pagination?.limit || 10;
       const skip = (page - 1) * limit;
+
+      const notifications = validateInteractionsRequest(body);
+
+      if (body.club_id) {
+        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        if (!clubs) {
+          notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
+        }
+      }
+
+      if (body.exercise_id) { 
+        const exercises = await this.exercisesRepository.findOne({ where: { id: body.exercise_id } });
+        if (!exercises) {
+          notifications.push(errors.BAD_REQ_GEN('012').notifications[0]);
+        }
+      }
+
+      if (notifications.length > 0) {
+        throw new BadRequestException({
+          data: null,
+          pagination: null,
+          notifications: notifications
+        });
+      }
 
       const queryBuilder = this.dataSource
         .createQueryBuilder()
@@ -346,8 +364,12 @@ export class InteractionsService {
           total_pages: +totalPages,
           current_page: +page,
         },
+        notifications: []
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       this.logger.error('Error getting interactions', error);
       throw new InternalServerErrorException({
         status: 500,
@@ -364,6 +386,23 @@ export class InteractionsService {
       const page = body.pagination?.page || 1;
       const limit = body.pagination?.limit || 10;
       const skip = (page - 1) * limit;
+
+      const notifications = validateCommentsRequest(body);
+
+      if (body.club_id) {
+        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        if (!clubs) {
+          notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
+        }
+      }
+
+      if (notifications.length > 0) {
+        throw new BadRequestException({
+          data: null,
+          pagination: null,
+          notifications: notifications
+        });
+      }
 
       const queryBuilder = this.dataSource
         .createQueryBuilder()
@@ -428,9 +467,13 @@ export class InteractionsService {
           total_pages: +totalPages,
           current_page: +page,
         },
+        notifications: [],
       };
 
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException({
         status: 500,
         category: '25',
@@ -444,7 +487,23 @@ export class InteractionsService {
   async getEmojiTotal(body: GetEmojiTotalDto) {
 
     try {
-      this.logger.log('GET EMOJI TOTAL');
+      
+      const notifications = validateEmojiRequest(body);
+
+      if (body.club_id) {
+        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        if (!clubs) {
+          notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
+        }
+      }
+
+      if (notifications.length > 0) {
+        throw new BadRequestException({
+          data: null,
+          pagination: null,
+          notifications: notifications
+        });
+      }
 
       const queryBuilder = this.dataSource
         .createQueryBuilder()
@@ -507,6 +566,9 @@ export class InteractionsService {
 
     } catch (error) {
       this.logger.error('Error getting emoji total', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException({
         status: 500,
         category: '26',
