@@ -1,10 +1,11 @@
-import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { ROLES_KEY } from "src/utils/constants";
 import { DataSource } from "typeorm";
 import { Role } from "../entities/role.entity";
 import { Credential } from "../entities/credential.entity";
 import { DateTime } from "luxon";
+import { errors } from "src/utils/catalog.errors";
 
 @Injectable()
 export class VerifyCredentialGuard implements CanActivate {
@@ -12,6 +13,8 @@ export class VerifyCredentialGuard implements CanActivate {
     private reflector: Reflector,
     private dataSource: DataSource,
   ) {}
+
+  private logger = new Logger('verify-credential.guard');
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const rolesOfHandler = this.reflector.get<string[]>(
@@ -22,11 +25,19 @@ export class VerifyCredentialGuard implements CanActivate {
     const { headers } = context.switchToHttp().getRequest();
 
     if (!roles || roles.length === 0) {
-      throw new InternalServerErrorException('No roles provided');
+      this.logger.error('No roles provided');
+      throw new InternalServerErrorException(errors.INTERNAL_001());
     }
     const apiKey = headers['api-key'] || '';
-    if (!apiKey.includes('sk_')) {  
-      throw new UnauthorizedException('Unauthorized');
+
+    if (!apiKey) {
+      this.logger.error('No api key provided');
+      throw new UnauthorizedException(errors.AUTH_001());
+    }
+
+    if (!apiKey.includes('sk_')) {
+      this.logger.error('Unauthorized');
+      throw new UnauthorizedException(errors.AUTH_002());
     }
 
     const [ username, accessKey ] = apiKey.split('sk_');
@@ -47,20 +58,20 @@ export class VerifyCredentialGuard implements CanActivate {
     const result = await queryBuilder.getRawOne();
 
     if (!result) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(errors.AUTH_003());
     }
 
     if (!result.active) {
-      throw new UnauthorizedException('Credential is not active');
+      throw new UnauthorizedException(errors.AUTH_004());
     }
 
     if (!roles.includes(result.role)) {
-      throw new UnauthorizedException('Insufficient permissions');
+      throw new UnauthorizedException(errors.AUTH_005());
     }
 
     const executeDate = DateTime.now().setZone('UTC');
     if (result.expires_at && DateTime.fromJSDate(result.expires_at) < executeDate) {
-      throw new UnauthorizedException('Credential has expired');
+      throw new UnauthorizedException(errors.AUTH_006());
     }
 
     const queryBuilderUpdate = this.dataSource
