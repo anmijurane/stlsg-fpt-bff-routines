@@ -36,7 +36,7 @@ export const errors = {
     pagination: null,
     notifications: [{
       "category": 400,
-      "code": "E_FPT_ROUTINES_400_003",
+      "code": "E_FPT_ROUTINES_401_003",
       // TODO: add in middleware
       "status": 401,
       "meta": {

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: FPT Routines Analytics API
-  version: 1.0.0
+  version: 1.0.1
   description: API de analítica para interacciones, emojis y comentarios del portal de rutinas.
 
 servers:
@@ -13,19 +13,13 @@ servers:
 components:
   parameters:
     XApiKey:
-      name: x-api-key
+      name: api-key
       in: header
       required: true
       description: Clave de autenticación de la API
       schema:
         type: string
-    XTenantId:
-      name: x-tenant-id
-      in: header
-      required: true
-      description: Identificador del tenant (cadena)
-      schema:
-        type: string
+        example: "user_anysk_00000021-0000-0000-0000-000000000000"
 
   schemas:
     DateRange:
@@ -36,13 +30,13 @@ components:
           format: date
           description: Zona horaria México Centro
           nullable: true
-          example: 2025-10-01 00:00:00
+          example: "2025-10-01 00:00:00"
         end:
           type: string
           format: date
           description: Zona horaria México Centro
           nullable: true
-          example: 2025-10-31 23:59:59
+          example: "2025-10-31 23:59:59"
 
     PaginationRequest:
       type: object
@@ -182,7 +176,7 @@ components:
         timestamp:
           type: string
           format: date-time
-          example: 2025-10-01T00:00:12.085Z
+          example: 2025-10-01 10:55:12
       required:
         - club_name
         - user
@@ -400,7 +394,6 @@ paths:
         - Analytics
       parameters:
         - $ref: "#/components/parameters/XApiKey"
-        - $ref: "#/components/parameters/XTenantId"
       requestBody:
         required: true
         content:
@@ -429,7 +422,6 @@ paths:
         - Analytics
       parameters:
         - $ref: "#/components/parameters/XApiKey"
-        - $ref: "#/components/parameters/XTenantId"
       requestBody:
         required: true
         content:
@@ -458,7 +450,6 @@ paths:
         - Analytics
       parameters:
         - $ref: "#/components/parameters/XApiKey"
-        - $ref: "#/components/parameters/XTenantId"
       requestBody:
         required: true
         content:
