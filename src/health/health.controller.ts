@@ -7,7 +7,7 @@ export class HealthController {
 
   @Get()
   checkHealth() {
-    return { status: 'ok' };
+    return { status: 'ok', version: process.env.npm_package_version };
   }
 
 }
