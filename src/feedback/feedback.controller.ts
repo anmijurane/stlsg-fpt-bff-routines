@@ -13,7 +13,7 @@ import { UserContext } from './types';
 import { UUID } from 'node:crypto';
 import { Auth } from 'src/common/decorators/auth.decorator';
 
-@Controller('feedback')
+@Controller('/api/feedback')
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
