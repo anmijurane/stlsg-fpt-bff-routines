@@ -1,11 +1,21 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UUID } from 'node:crypto';
 
 import { Feedback } from './entities/feedback.entity';
 import { FeedbackDBInsert } from './types';
 import { Sessions } from 'src/interactions/entities/sessions.entity';
+import { RoutineFeedbackDto } from './dto/routine-feedback-req.dto';
+import { RoutineFeedback, RoutineFeedbackType } from './entities/routine-feedback.entity';
+import { Exercises } from 'src/common/entities/exercises.entity';
+import { Events } from 'src/interactions/entities/events.entity';
 
 @Injectable()
 export class FeedbackService {
@@ -13,7 +23,8 @@ export class FeedbackService {
     @InjectRepository(Feedback)
     private readonly feedbackRepository: Repository<Feedback>,
     @InjectRepository(Sessions)
-    private readonly sessionsRepository: Repository<Sessions>,    
+    private readonly sessionsRepository: Repository<Sessions>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(feedback: FeedbackDBInsert) {
@@ -67,5 +78,80 @@ export class FeedbackService {
     regitry.comment = comment;
     await this.feedbackRepository.save(regitry);
     return { id: regitry.id, comment: regitry.comment };
+  }
+
+  async createRoutineFeedback(sessionRef: string, body: RoutineFeedbackDto) {
+
+    let typeEvent: RoutineFeedbackType = 'feedback_routine';
+
+    if (body?.exercise_id) {
+      typeEvent = 'feedback_exercise';
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const session = await queryRunner.manager.findOneBy(Sessions, {
+        session_ref: sessionRef,
+      });
+      if (!session) {
+        throw new NotFoundException('Session not found');
+      }
+
+      console.log(session.id);
+
+      let exercise: Exercises | null = null;
+      if (typeEvent === 'feedback_exercise') {
+        exercise = await queryRunner.manager.findOneBy(Exercises, {
+          id: body.exercise_id,
+        });
+        if (!exercise) {
+          throw new NotFoundException('Exercise not found');
+        }
+      }
+
+      const createdAt = new Date();
+      const routineFeedback = queryRunner.manager.create(RoutineFeedback, {
+        session_id: session.id,
+        type: typeEvent,
+        value: body.value,
+        routine: body.routine,
+        exercise_id: exercise?.id ?? null,
+        level_id: body.level_id,
+        day_routine: body.day_routine,
+        created_at: createdAt,
+      });
+      const savedFeedback = await queryRunner.manager.save(routineFeedback);
+
+      const event = queryRunner.manager.create(Events, {
+        session_id: session.id,
+        page_view_id: null,
+        type: typeEvent,
+        exercise_id: exercise?.id ?? null,
+        exercise_name: exercise?.name ?? null,
+        routine: body.routine,
+        level_id: body.level_id,
+        day_routine: body.day_routine,
+        created_at: createdAt,
+      });
+      const savedEvent = await queryRunner.manager.save(event);
+
+      await queryRunner.commitTransaction();
+
+      return {
+        id: savedFeedback.id,
+        event_id: savedEvent.id,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Could not save routine feedback');
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

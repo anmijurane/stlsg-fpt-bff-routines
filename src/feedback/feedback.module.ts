@@ -6,6 +6,9 @@ import { Feedback } from './entities/feedback.entity';
 import { Sessions } from 'src/interactions/entities/sessions.entity';
 import { Role } from 'src/common/entities/role.entity';
 import { Credential } from 'src/common/entities/credential.entity';
+import { RoutineFeedback } from './entities/routine-feedback.entity';
+import { Events } from 'src/interactions/entities/events.entity';
+import { Exercises } from 'src/common/entities/exercises.entity';
 
 @Module({
   controllers: [FeedbackController],
@@ -13,6 +16,9 @@ import { Credential } from 'src/common/entities/credential.entity';
   imports: [TypeOrmModule.forFeature([
     Feedback,
     Sessions,
+    RoutineFeedback,
+    Events,
+    Exercises,
     Role,
     Credential
   ])],
