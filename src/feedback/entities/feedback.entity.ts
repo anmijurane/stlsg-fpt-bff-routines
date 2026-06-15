@@ -1,39 +1,36 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-import { Emoji } from '../types';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Sessions } from '../../interactions/entities/sessions.entity';
+import { Exercises } from '../../common/entities/exercises.entity';
 
 @Entity('feedback')
 export class Feedback {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: string;
 
+  @Column({ type: 'bigint', nullable: false })
+  session_id: string;
+
+  @ManyToOne(() => Sessions)
+  @JoinColumn({ name: 'session_id' })
+  session: Sessions;
+
+  @Column({ type: 'text', nullable: true })
+  exercise_id: string;
+
+  @ManyToOne(() => Exercises)
+  @JoinColumn({ name: 'exercise_id' })
+  exercise: Exercises;
+
   @Column({
-    type: 'text',
+    type: 'enum',
     enum: ['happy', 'neutral', 'sad', 'null'],
-    nullable: true,
+    nullable: false,
   })
-  emoji: Emoji;
+  emoji: 'happy' | 'neutral' | 'sad' | 'null';
 
   @Column({ type: 'text', nullable: true })
-  comment?: string;
+  comment: string;
 
-  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' }) // zona horaria incluida
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
-
-  @Column({ type: 'text', nullable: true })
-  page_path?: string;
-
-  @Column({ type: 'text', nullable: true })
-  user_agent?: string;
-
-  @Column({ type: 'boolean', default: false })
-  rejected: boolean;
-
-  @Column({ type: 'text', nullable: true })
-  ip?: string;
-
-  @Column({ type: 'text', nullable: true })
-  sedeId?: string;
-
-  @Column({ type: 'text', nullable: true })
-  sessionId?: string;
 }

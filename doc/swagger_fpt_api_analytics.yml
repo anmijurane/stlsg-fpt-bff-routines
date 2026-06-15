@@ -1,0 +1,471 @@
+openapi: 3.0.3
+info:
+  title: FPT Routines Analytics API
+  version: 1.0.1
+  description: API de analítica para interacciones, emojis y comentarios del portal de rutinas.
+
+servers:
+  - url: https://api.planet-fitness.mx
+    description: Servidor productivo (Estable)
+  - url: https://api-ist.planet-fitness.mx
+    description: Servidor de desarrollo (Inestable)
+
+components:
+  parameters:
+    XApiKey:
+      name: api-key
+      in: header
+      required: true
+      description: Clave de autenticación de la API
+      schema:
+        type: string
+        example: "user_anysk_00000021-0000-0000-0000-000000000000"
+
+  schemas:
+    DateRange:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date
+          description: Zona horaria México Centro
+          nullable: true
+          example: "2025-10-01 00:00:00"
+        end:
+          type: string
+          format: date
+          description: Zona horaria México Centro
+          nullable: true
+          example: "2025-10-31 23:59:59"
+
+    PaginationRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+          example: 50
+      required:
+        - page
+        - limit
+
+    PaginationResponse:
+      type: object
+      description: Metadatos de paginación
+      properties:
+        total_items_per_page:
+          type: integer
+          example: 50
+        total_items:
+          type: integer
+          example: 120
+        total_pages:
+          type: integer
+          example: 3
+        current_page:
+          type: integer
+          example: 1
+      required:
+        - total_items_per_page
+        - total_items
+        - total_pages
+        - current_page
+
+    Notification:
+      type: object
+      description: Conjunto de objetos para los errores del servidor.
+      properties:
+        category:
+          type: integer
+          example: 400
+        code:
+          type: string
+          description: Se compone por E_COMPONENT_HTTP-CODE_NUMBER-CODE
+          example: E_FPT-ROUTINES_400_000
+
+    # ---------- INTERACTIONS ----------
+    InteractionRoutineFilter:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Tipo de rutina (ej. muscle_gain, adaptation, health, fat-burning)
+          example: muscle_gain
+        level:
+          type: string
+          example: "2"
+        day:
+          type: string
+          nullable: true
+          example: "3"
+
+    InteractionFilterRequest:
+      type: object
+      properties:
+        club_id:
+          type: string
+          example: 236a7d40af
+        session_id:
+          type: string
+          nullable: true
+          example: f8976edf-1a67-47b2-88e3-2df4a173c33d
+        timestamp:
+          $ref: "#/components/schemas/DateRange"
+        exercise_id:
+          type: string
+          nullable: true
+          example: y7z8a9b1
+        routine:
+          $ref: "#/components/schemas/InteractionRoutineFilter"
+        pagination:
+          $ref: "#/components/schemas/PaginationRequest"
+
+    InteractionUser:
+      type: object
+      properties:
+        browser:
+          type: string
+          example: Mobile Chrome 140.0.0.0
+        os:
+          type: string
+          example: Android 10
+
+    InteractionExercise:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+          example: y7z8a9b1
+        name:
+          type: string
+          example: Sentadilla TRX
+
+    InteractionItem:
+      type: object
+      properties:
+        slug:
+          type: string
+          description: Identificador interno de la sesión / interacción
+          example: 257d3e6a8b
+        club_id:
+          type: string
+          nullable: true
+          example: 257d3e6a8b
+        club_name:
+          type: string
+          example: Center Plazas
+        session_id:
+          type: string
+          nullable: true
+          example: f8976edf-1a67-47b2-88e3-2df4a173c33d
+        user:
+          $ref: "#/components/schemas/InteractionUser"
+        routine:
+          $ref: "#/components/schemas/InteractionRoutineFilter"
+        exercise:
+          $ref: "#/components/schemas/InteractionExercise"
+        page:
+          type: string
+          example: /exercise/y7z8a9b1/?level=2&day=3&category=muscle_gain
+        timestamp:
+          type: string
+          format: date-time
+          example: 2025-10-01 10:55:12
+      required:
+        - club_name
+        - user
+        - routine
+        - page
+        - timestamp
+
+    InteractionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/InteractionItem"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorResponse"
+          default: []
+      required:
+        - data
+        - pagination
+        - notifications
+
+    # ---------- EMOJI ----------
+    EmojiFilterRequest:
+      type: object
+      properties:
+        club_id:
+          type: string
+          nullable: true
+          description: Si se omite, trae todos los clubs
+          example: 236a7d40af
+        timestamp:
+          $ref: "#/components/schemas/DateRange"
+
+    EmojiItem:
+      type: object
+      properties:
+        club_id:
+          type: string
+          example: 0b0986e177
+        happy_count:
+          type: integer
+          example: 73
+        neutral_count:
+          type: integer
+          example: 3
+        sad_count:
+          type: integer
+          example: 3
+        total:
+          type: integer
+          example: 79
+      required:
+        - club_id
+        - happy_count
+        - neutral_count
+        - sad_count
+        - total
+
+    EmojiResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmojiItem"
+        pagination:
+          type: object
+          nullable: true
+          default: null
+          description: Este endpoint no pagina, normalmente será null
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorResponse"
+          default: []
+      required:
+        - data
+        - notifications
+
+    # ---------- COMMENTS ----------
+    CommentFilterRequest:
+      type: object
+      properties:
+        club_id:
+          type: string
+          nullable: true
+          example: 236a7d40af
+        emoji:
+          type: string
+          nullable: true
+          description: Filtro por tipo de reacción
+          enum: [happy, neutral, sad]
+          example: happy
+        session_id:
+          type: string
+          nullable: true
+          example: 078ca7f3-67ec-4bfb-9a28-8fc315738be2
+        timestamp:
+          $ref: "#/components/schemas/DateRange"
+        pagination:
+          $ref: "#/components/schemas/PaginationRequest"
+
+    CommentItem:
+      type: object
+      properties:
+        club_id:
+          type: string
+          example: 236a7d40af
+        session_id:
+          type: string
+          example: 078ca7f3-67ec-4bfb-9a28-8fc315738be2
+        date:
+          type: string
+          format: date
+          example: 2025-07-11 16:29:07
+        emoji:
+          type: string
+          enum: [happy, neutral, sad]
+          example: happy
+        comment:
+          type: string
+          example: Es muy practica y clara !
+      required:
+        - club_id
+        - session_id
+        - date
+        - emoji
+        - comment
+
+    CommentsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentItem"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorResponse"
+          default: []
+      required:
+        - data
+        - pagination
+        - notifications
+
+    # ---------- ERRORES COMUNES ----------
+    ErrorResponse:
+      type: object
+      properties:
+        data:
+          nullable: true
+        pagination:
+          nullable: true
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+      required:
+        - data
+        - pagination
+        - notifications
+
+  responses:
+    BadRequest:
+      description: Petición inválida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            data: null
+            pagination: null
+            notifications:
+              - category: 400
+                code: E_FPT-ROUTINES_400_000
+    Unauthorized:
+      description: No autorizado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            data: null
+            pagination: null
+            notifications:
+              - category: 401
+                code: E_FPT-ROUTINES_401_000
+    InternalError:
+      description: Error interno del servidor
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            data: null
+            pagination: null
+            notifications:
+              - category: 500
+                code: E_FPT-ROUTINES_500_AAA
+
+paths:
+  /v1/analytics/interactions:
+    post:
+      summary: Listar interacciones del portal
+      description: Devuelve interacciones de usuarios por club, rutina, ejercicio, rango de fechas, etc.
+      tags:
+        - Analytics
+      parameters:
+        - $ref: "#/components/parameters/XApiKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InteractionFilterRequest"
+      responses:
+        "200":
+          description: Lista paginada de interacciones
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InteractionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /v1/analytics/emoji:
+    post:
+      summary: Obtener agregados de feedback por emoji
+      description: Devuelve el conteo de reacciones (happy, neutral, sad) por club en un rango de fechas.
+      tags:
+        - Analytics
+      parameters:
+        - $ref: "#/components/parameters/XApiKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmojiFilterRequest"
+      responses:
+        "200":
+          description: Totales de emojis por club
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmojiResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /v1/analytics/comments:
+    post:
+      summary: Listar comentarios de feedback
+      description: Devuelve los comentarios de usuarios filtrados por club, emoji, fecha y sesión.
+      tags:
+        - Analytics
+      parameters:
+        - $ref: "#/components/parameters/XApiKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentFilterRequest"
+      responses:
+        "200":
+          description: Lista paginada de comentarios
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"

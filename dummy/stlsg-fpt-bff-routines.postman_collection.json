@@ -1,0 +1,260 @@
+{
+	"info": {
+		"_postman_id": "00af9441-b397-4594-9c9b-784ad963327d",
+		"name": "stlsg-fpt-bff-routines",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "12133048"
+	},
+	"item": [
+		{
+			"name": "health",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{URL_COMPOSE}}/api/health"
+			},
+			"response": []
+		},
+		{
+			"name": "[CREATE] interaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"session_ref\": \"a665b313-021f-4ef4-b0b3-8611451bc2cc\",\n    \"club_id\": \"2e7d9a4c05\",\n    \"client\": {\n        \"ip\": \"187.189.41.20\",\n        \"browser\": \"Samsung Internet 28.0\",\n        \"os\": \"Android 10\",\n        \"device\": \"K\"\n    },\n    \"page\": {\n        \"path\": \"/exercise/a8b3e9f1c9a\",\n        \"query_string\": \"?level=3&day=1&category=fat_burning\"\n    }\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{URL_COMPOSE}}/api/v1/analytics/create/interaction"
+			},
+			"response": []
+		},
+		{
+			"name": "[RUNNER] create interaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const data = pm.iterationData.toObject()",
+							"console.log(data);",
+							"",
+							"let page = data.page;",
+							"let query_string = '';",
+							"",
+							"if (data.page.includes('?')) {",
+							"    const desct = data.page.split('?');",
+							"    page = desct[0];",
+							"    query_string = desct[1];",
+							"}",
+							"",
+							"pm.variables.set('session_ref', data.sessionRef)",
+							"pm.variables.set('club_id', data.club_id)",
+							"",
+							"pm.variables.set('client_ip', data.client_ip)",
+							"pm.variables.set('client_browser', data.user_agent_browser)",
+							"pm.variables.set('client_os', data.user_agent_os)",
+							"pm.variables.set('client_device', data.user_agent_device)",
+							"",
+							"pm.variables.set('page_path', page)",
+							"pm.variables.set('page_query', query_string)",
+							"pm.variables.set('date', data.timestamp)",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"session_ref\": \"{{session_ref}}\",\n  \"club_id\": \"{{club_id}}\",\n  \"client\": {\n    \"ip\": \"{{client_ip}}\",\n    \"browser\": \"{{client_browser}}\",\n    \"os\": \"{{client_os}}\",\n    \"device\": \"{{client_device}}\"\n  },\n  \"page\": {\n    \"path\": \"{{page_path}}\",\n    \"query_string\": \"{{page_query}}\"\n  },\n  \"date\": \"{{date}}\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{URL_COMPOSE}}/api/v1/analytics/create/interaction"
+			},
+			"response": []
+		},
+		{
+			"name": "get Interactions",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"exercise_id\": \"\",\n    \"routine\": {\n        \"type\": \"\",\n        \"level\": \"\",\n        \"day\": \"\"\n    },\n    \"pagination\": {\n        \"page\": 1,\n        \"limit\": 50\n    },\n    \"club_id\": \"\",\n    \"session_id\": \"\",\n    \"timestamp\": {\n        \"start\": \"2025-07-26 18:11:57\",\n        \"end\": \"2025-07-27 18:11:57\"\n    }\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{URL_COMPOSE}}/api/v1/analytics/interactions"
+			},
+			"response": []
+		},
+		{
+			"name": "get comments",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"club_id\": \"8c1029a5e7\",\n    \"emoji\": null,\n    \"session_id\": \"\",\n    \"timestamp\": {\n        \"start\": \"2025-12-28 13:00:00\",\n        \"end\": \"2025-12-28 14:00:00\"\n    },\n    \"pagination\": {\n        \"page\": 1,\n        \"limit\": 50\n    }\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{URL_COMPOSE}}/api/v1/analytics/comments"
+			},
+			"response": []
+		},
+		{
+			"name": "[UPDATE] Feedback Emoji",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "user-context",
+						"value": "ewogICJpcCI6ICIxMC40MC4zLjEiLAogICJ1c2VyX2FnZW50IjogIkFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xMjIuMC4wLjAgU2FmYXJpLzUzNy4zNiIsCiAgInNlc3Npb25faWQiOiAiNjczNGJlYTEtZDg2ZC00OTBhLTk3MjAtMDNmMzlkM2E0ZDYzIgp9",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"emoji\": \"happy\",\n  \"comment\": \"Me encanta la app!\",\n  \"page_path\": \"/\",\n  \"rejected\": false,\n  \"sede_id\": \"8c1029a5e7\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{URL_COMPOSE}}/api/feedback/comment/6734bea1-d86d-490a-9720-03f39d3a4d63"
+			},
+			"response": []
+		},
+		{
+			"name": "[CREATE] Feedback Emoji",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "user-context",
+						"value": "ewogICJpcCI6ICIxMC40MC4zLjEiLAogICJ1c2VyX2FnZW50IjogIkFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xMjIuMC4wLjAgU2FmYXJpLzUzNy4zNiIsCiAgInNlc3Npb25faWQiOiAiNjczNGJlYTEtZDg2ZC00OTBhLTk3MjAtMDNmMzlkM2E0ZDYzIgp9",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"emoji\": \"happy\",\n  \"comment\": \"\",\n  \"page_path\": \"/\",\n  \"rejected\": false,\n  \"sede_id\": \"8c1029a5e7\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{URL_COMPOSE}}/api/feedback/emoji"
+			},
+			"response": []
+		},
+		{
+			"name": "[RUNNER] Create Feedback Emoji",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const data = pm.iterationData.toObject()",
+							"console.log(data);",
+							"",
+							"const moods = ['happy', 'neutral', 'sad'];",
+							"var randomIndex = Math.floor(Math.random() * moods.length);",
+							"const emoji = moods[randomIndex];",
+							"",
+							"const user_context = {",
+							"  \"ip\": \"10.40.3.1\",",
+							"  \"user_agent\": \"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36\",",
+							"  \"session_id\": data.session_id",
+							"}",
+							"",
+							"var jsonString = JSON.stringify(user_context);",
+							"var base64Result = btoa(jsonString);",
+							"",
+							"pm.variables.set('user_context', base64Result)",
+							"",
+							"pm.variables.set('emoji', emoji)",
+							"pm.variables.set('club_id', data.club_id)",
+							"pm.variables.set('page', '/')",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "user-context",
+						"value": "{{user_context}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"emoji\": \"{{emoji}}\",\n  \"comment\": \"\",\n  \"page_path\": \"{{page}}\",\n  \"rejected\": false,\n  \"sede_id\": \"{{club_id}}\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{URL_COMPOSE}}/api/feedback/emoji"
+			},
+			"response": []
+		}
+	]
+}

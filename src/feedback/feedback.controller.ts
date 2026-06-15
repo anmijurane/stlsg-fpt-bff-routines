@@ -11,17 +11,18 @@ import { Headers } from 'src/common/decorators/raw-headers.decorator';
 import { decodeBase64 } from 'src/utils/decodeBase64';
 import { UserContext } from './types';
 import { UUID } from 'node:crypto';
+import { Auth } from 'src/common/decorators/auth.decorator';
 
 @Controller('feedback')
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
   @Post('/emoji')
+  @Auth('admin', 'creator')
   async create(
     @Body() body: EmojiFeedbackDto,
     @Headers() headers: Record<string, string>,
   ) {
-    console.log('ENTRO AL REQUEST');
     const userContextBase64 = headers['user-context'];
     const userContextJsonRaw = decodeBase64(userContextBase64);
     const userContext = JSON.parse(userContextJsonRaw) as UserContext;
@@ -31,7 +32,6 @@ export class FeedbackController {
         notification: [{ message: 'userContext invalid' }],
       });
     }
-    console.log({ rejected: body.rejected, emoji: body.emoji });
     return await this.feedbackService.create({
       comment: body.comment,
       emoji: body.emoji,
@@ -45,6 +45,7 @@ export class FeedbackController {
   }
 
   @Post('/comment/:id')
+  @Auth('admin', 'creator')
   async update(
     @Param('id') id: UUID,
     @Body() body: Pick<EmojiFeedbackDto, 'comment'>,
@@ -59,10 +60,6 @@ export class FeedbackController {
         notification: [{ message: 'userContext invalid' }],
       });
     }
-    return await this.feedbackService.addComment(
-      id,
-      body.comment,
-      userContext.session_id,
-    );
+    return await this.feedbackService.addComment(userContext.session_id, body.comment);
   }
 }
