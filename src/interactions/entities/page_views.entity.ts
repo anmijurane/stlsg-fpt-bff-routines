@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Sessions } from "./sessions.entity";
 import { RoutineLevels } from "../../common/entities/routine_levels.entity";
+import { RoutineType } from "src/app-types/interactions";
 
 @Entity('page_views')
 export class PageViews {
@@ -21,7 +22,7 @@ export class PageViews {
   query_string: string;
 
   @Column({ type: 'text', nullable: true, name: 'routine' })
-  routine: 'adaptation' | 'muscle-gain' | 'health' | 'fat-burning' | null;
+  routine: RoutineType | null;
 
   @Column({ type: 'smallint', nullable: true })
   level_id: number;

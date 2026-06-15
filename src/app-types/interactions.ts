@@ -16,9 +16,18 @@ export interface PaginationI {
   limit: number;
 }
 
-export type RoutineType = 'adaptation' | 'muscle-gain' | 'health' | 'fat-burning';
+export type RoutineType = 'adaptation' | 'muscle_gain' | 'health' | 'fat_burning';
 
-export type EventType = 'home' | 'attention_view' | 'exercise_view' | 'routine_view' | 'feedback' | 'other';
+export type EventType =
+  | 'home'
+  | 'attention_view'
+  | 'exercise_view'
+  | 'routine_view'
+  | 'feedback'
+  | 'demographic_form'
+  | 'feedback_routine'
+  | 'feedback_exercise'
+  | 'other';
 
 export type TypeView = 'home' | 'exercise' | 'routine' | 'attention';
 

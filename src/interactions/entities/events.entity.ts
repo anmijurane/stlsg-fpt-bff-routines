@@ -3,7 +3,7 @@ import { Sessions } from "./sessions.entity";
 import { PageViews } from "./page_views.entity";
 import { Exercises } from "../../common/entities/exercises.entity";
 import { RoutineLevels } from "../../common/entities/routine_levels.entity";
-import { EventType } from "src/app-types/interactions";
+import { EventType, RoutineType } from "src/app-types/interactions";
 
 @Entity('events')
 export class Events {
@@ -26,7 +26,18 @@ export class Events {
 
   @Column({
     type: 'enum',
-    enum: ['home', 'attention_view', 'exercise_view', 'routine_view', 'feedback', 'other'],
+    enum: [
+      'home',
+      'attention_view',
+      'exercise_view',
+      'routine_view',
+      'feedback',
+      'demographic_form',
+      'feedback_routine',
+      'feedback_exercise',
+      'other',
+    ],
+    enumName: 'event_type',
     nullable: false,
     name: 'type'
   })
@@ -42,8 +53,14 @@ export class Events {
   @Column({ type: 'text', nullable: true })
   exercise_name: string;
 
-  @Column({ type: 'enum', enum: ['adaptation', 'muscle-gain', 'health', 'fat-burning'], nullable: true, name: 'routine' })
-  routine: 'adaptation' | 'muscle-gain' | 'health' | 'fat-burning' | null;
+  @Column({
+    type: 'enum',
+    enum: ['adaptation', 'muscle_gain', 'health', 'fat_burning'],
+    enumName: 'routine_type',
+    nullable: true,
+    name: 'routine',
+  })
+  routine: RoutineType | null;
 
   @Column({ type: 'smallint', nullable: true })
   level_id: number;
@@ -58,4 +75,3 @@ export class Events {
   @Column({ type: 'timestamptz' })
   created_at: Date;
 }
-
