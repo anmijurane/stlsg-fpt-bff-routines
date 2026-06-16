@@ -10,6 +10,7 @@ import { Exercises } from 'src/common/entities/exercises.entity';
 import { RoutineLevels } from 'src/common/entities/routine_levels.entity';
 import { Role } from 'src/common/entities/role.entity';
 import { Credential } from 'src/common/entities/credential.entity';
+import { DemographicForm } from 'src/feedback/entities/demographic-form.entity';
 
 @Module({
   controllers: [InteractionsController],
@@ -23,6 +24,7 @@ import { Credential } from 'src/common/entities/credential.entity';
     RoutineLevels,
     Role,
     Credential,
+    DemographicForm,
   ])],
 })
 export class InteractionsModule {}

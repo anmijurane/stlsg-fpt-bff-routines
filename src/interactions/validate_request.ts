@@ -3,6 +3,7 @@ import { errors } from "src/utils/catalog.errors";
 import { GetCommentsDto } from "./dto/get-comments.dto";
 import { GetEmojiTotalDto } from "./dto/get-emoji-total.dto";
 import { parseTimestampRange } from "./timestamp-range";
+import { GetDemographicFormValuesDto } from "./dto/get-demographic-form-values.dto";
 
 interface CustomError {
   category: number,
@@ -17,6 +18,7 @@ interface CustomError {
 type ValidateInteractionsRequestFunc = (body: GetInteractionsDto) => CustomError[];
 type ValidateCommentsRequestFunc = (body: GetCommentsDto) => CustomError[];
 type ValidateEmojiRequestFunc = (body: GetEmojiTotalDto) => CustomError[];
+type ValidateDemographicsRequestFunc = (body: GetDemographicFormValuesDto) => CustomError[];
 
 const validateTimestamp = (body: { timestamp?: { start: string; end: string } }) => {
   const notifications: CustomError[] = [];
@@ -93,6 +95,31 @@ export const validateCommentsRequest: ValidateCommentsRequestFunc = (body) => {
 export const validateEmojiRequest: ValidateEmojiRequestFunc = (body) => {
 
   const notifications: CustomError[] = [];
+
+  notifications.push(...validateTimestamp(body));
+
+  return notifications;
+
+}
+
+export const validateDemographicsRequest: ValidateDemographicsRequestFunc = (body) => {
+
+  const gender_types = ['male', 'female', 'other'];
+  const age_range_types = ['<18', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+  const membership_types = ['classic-card', 'pf-black-card', 'invite'];
+  const notifications: CustomError[] = [];
+
+  if (body.gender && !gender_types.includes(body.gender)) {
+    notifications.push(errors.BAD_REQ_GEN('014').notifications[0]);
+  }
+
+  if (body.age_range && !age_range_types.includes(body.age_range)) {
+    notifications.push(errors.BAD_REQ_GEN('015').notifications[0]);
+  }
+
+  if (body.membership && !membership_types.includes(body.membership)) {
+    notifications.push(errors.BAD_REQ_GEN('016').notifications[0]);
+  }
 
   notifications.push(...validateTimestamp(body));
 

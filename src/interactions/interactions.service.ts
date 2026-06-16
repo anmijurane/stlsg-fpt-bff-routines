@@ -12,10 +12,12 @@ import { DateTime } from 'luxon';
 import { GetCommentsDto } from './dto/get-comments.dto';
 import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
 import { GetInteractionsDto } from './dto/get-interactions.dto';
+import { GetDemographicFormValuesDto } from './dto/get-demographic-form-values.dto';
 import { Clubs } from 'src/common/entities/clubs.entity';
 import { Feedback } from 'src/feedback/entities/feedback.entity';
+import { DemographicForm } from 'src/feedback/entities/demographic-form.entity';
 import { errors } from 'src/utils/catalog.errors';
-import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest } from './validate_request';
+import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest, validateDemographicsRequest } from './validate_request';
 import { parseTimestampRange } from './timestamp-range';
 
 @Injectable()
@@ -477,6 +479,136 @@ export class InteractionsService {
         code: 'E_BFF-ROUTINES-500_025',
         message: `Error getting comments: ${error.message}`,
         name: 'E_BFF-ROUTINES-500_025',
+      });
+    }
+  }
+
+  async getDemographics(body: GetDemographicFormValuesDto) {
+    try {
+      const page = body.pagination?.page || 1;
+      const limit = body.pagination?.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const notifications = validateDemographicsRequest(body);
+
+      if (body.club_id) {
+        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        if (!clubs) {
+          notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
+        }
+      }
+
+      if (notifications.length > 0) {
+        throw new BadRequestException({
+          data: null,
+          pagination: null,
+          notifications: notifications
+        });
+      }
+
+      const queryBuilder = this.dataSource
+        .createQueryBuilder()
+        .select([
+          'df.id AS id',
+          's.session_ref AS session_id',
+          's.club_id AS club_id',
+          'c.name AS club_name',
+          'df.gender AS gender',
+          'df.age_range AS age_range',
+          'df.membership AS membership',
+          'df.contact_phone AS contact_phone',
+          'df.contact_email AS contact_email',
+          'df.created_at AS created_at',
+        ])
+        .from(DemographicForm, 'df')
+        .innerJoin(Sessions, 's', 's.id = df.session_id')
+        .leftJoin(Clubs, 'c', 'c.id = s.club_id');
+
+      if (body.club_id) {
+        queryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+      }
+
+      if (body.session_id) {
+        queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
+      }
+
+      if (body.gender) {
+        queryBuilder.andWhere('df.gender = :gender', { gender: body.gender });
+      }
+
+      if (body.age_range) {
+        queryBuilder.andWhere('df.age_range = :age_range', { age_range: body.age_range });
+      }
+
+      if (body.membership) {
+        queryBuilder.andWhere('df.membership = :membership', { membership: body.membership });
+      }
+
+      const timestampRange = parseTimestampRange(body.timestamp);
+
+      if (timestampRange.start?.isValid) {
+        const startDateUTC = timestampRange.start.toUTC().toJSDate();
+
+        queryBuilder.andWhere('df.created_at >= :start', { start: startDateUTC });
+      }
+
+      if (timestampRange.endExclusive?.isValid) {
+        const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
+
+        queryBuilder.andWhere('df.created_at < :endExclusive', { endExclusive: endDateUTC });
+      }
+
+      queryBuilder
+        .orderBy('df.created_at', 'ASC')
+        .addOrderBy('df.id', 'ASC');
+
+      const totalItems = await queryBuilder.getCount();
+
+      queryBuilder.offset(skip).limit(limit);
+
+      const rawResults = await queryBuilder.getRawMany();
+
+      const data = rawResults.map((row) => ({
+        id: row.id,
+        session_id: row.session_id,
+        club_id: row.club_id,
+        club_name: row.club_name,
+        gender: row.gender,
+        age_range: row.age_range,
+        membership: row.membership,
+        contact: {
+          phone: row.contact_phone,
+          email: row.contact_email,
+        },
+        created_at: DateTime.fromJSDate(row.created_at)
+          .setZone('America/Mexico_City')
+          .toFormat('yyyy-MM-dd HH:mm:ss'),
+      }));
+
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return {
+        data,
+        pagination: {
+          total_items_per_page: rawResults.length,
+          total_items: +totalItems,
+          total_pages: +totalPages,
+          current_page: +page,
+        },
+        notifications: [],
+      };
+
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error('Error getting demographics', error);
+      throw new InternalServerErrorException({
+        status: 500,
+        category: '27',
+        code: 'E_BFF-ROUTINES-500_027',
+        message: `Error getting demographics: ${error.message}`,
+        name: 'E_BFF-ROUTINES-500_027',
       });
     }
   }

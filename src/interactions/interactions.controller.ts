@@ -5,6 +5,7 @@ import { GetInteractionsDto } from './dto/get-interactions.dto';
 import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
 import { GetCommentsDto } from './dto/get-comments.dto';
 import { Auth } from 'src/common/decorators/auth.decorator';
+import { GetDemographicFormValuesDto } from './dto/get-demographic-form-values.dto';
 
 @Controller('/v1/analytics')
 export class InteractionsController {
@@ -32,6 +33,12 @@ export class InteractionsController {
   @Auth('admin', 'consultor')
   getContableEmojiBehavior(@Body() body: GetEmojiTotalDto) {
     return this.interactionsService.getEmojiTotal(body);
+  }
+  
+  @Post('/demographics')
+  @Auth('admin', 'consultor')
+  getDemographics(@Body() body: GetDemographicFormValuesDto) {
+    return this.interactionsService.getDemographics(body);
   }
 
 }
