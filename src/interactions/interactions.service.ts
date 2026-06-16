@@ -16,6 +16,7 @@ import { Clubs } from 'src/common/entities/clubs.entity';
 import { Feedback } from 'src/feedback/entities/feedback.entity';
 import { errors } from 'src/utils/catalog.errors';
 import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest } from './validate_request';
+import { parseTimestampRange } from './timestamp-range';
 
 @Injectable()
 export class InteractionsService {
@@ -303,20 +304,18 @@ export class InteractionsService {
         queryBuilder.andWhere('e.day_routine = :day_routine', { day_routine: body.routine.day });
       }
 
-      if (body.timestamp?.start) {
-        const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss', {
-          zone: 'America/Mexico_City'
-        }).toUTC().toJSDate();
-        
+      const timestampRange = parseTimestampRange(body.timestamp);
+
+      if (timestampRange.start?.isValid) {
+        const startDateUTC = timestampRange.start.toUTC().toJSDate();
+
         queryBuilder.andWhere('pv.visited_at >= :start', { start: startDateUTC });
       }
 
-      if (body.timestamp?.end) {
-        const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss', {
-          zone: 'America/Mexico_City'
-        }).toUTC().toJSDate();
-        
-        queryBuilder.andWhere('pv.visited_at <= :end', { end: endDateUTC });
+      if (timestampRange.endExclusive?.isValid) {
+        const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
+
+        queryBuilder.andWhere('pv.visited_at < :endExclusive', { endExclusive: endDateUTC });
       }
 
       queryBuilder
@@ -430,20 +429,18 @@ export class InteractionsService {
         queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
       }
 
-      if (body.timestamp?.start) {
-        const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss', {
-          zone: 'America/Mexico_City'
-        }).toUTC().toJSDate();
-        
+      const timestampRange = parseTimestampRange(body.timestamp);
+
+      if (timestampRange.start?.isValid) {
+        const startDateUTC = timestampRange.start.toUTC().toJSDate();
+
         queryBuilder.andWhere('fb.created_at >= :start', { start: startDateUTC });
       }
 
-      if (body.timestamp?.end) {
-        const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss', {
-          zone: 'America/Mexico_City'
-        }).toUTC().toJSDate();
-        
-        queryBuilder.andWhere('fb.created_at <= :end', { end: endDateUTC });
+      if (timestampRange.endExclusive?.isValid) {
+        const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
+
+        queryBuilder.andWhere('fb.created_at < :endExclusive', { endExclusive: endDateUTC });
       }
       const totalItems = await queryBuilder.getCount();
       queryBuilder.offset(skip).limit(limit);
@@ -527,20 +524,18 @@ export class InteractionsService {
         queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
       }
 
-      if (body.timestamp?.start) {
-        const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss', {
-          zone: 'America/Mexico_City'
-        }).toUTC().toJSDate();
-        
+      const timestampRange = parseTimestampRange(body.timestamp);
+
+      if (timestampRange.start?.isValid) {
+        const startDateUTC = timestampRange.start.toUTC().toJSDate();
+
         queryBuilder.andWhere('fb.created_at >= :start', { start: startDateUTC });
       }
 
-      if (body.timestamp?.end) {
-        const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss', {
-          zone: 'America/Mexico_City'
-        }).toUTC().toJSDate();
-        
-        queryBuilder.andWhere('fb.created_at <= :end', { end: endDateUTC });
+      if (timestampRange.endExclusive?.isValid) {
+        const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
+
+        queryBuilder.andWhere('fb.created_at < :endExclusive', { endExclusive: endDateUTC });
       }
 
       queryBuilder.groupBy('s.club_id');
@@ -580,4 +575,3 @@ export class InteractionsService {
 
   }
 }
-

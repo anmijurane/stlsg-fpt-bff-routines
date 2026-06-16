@@ -1,8 +1,8 @@
-import { DateTime } from "luxon";
 import { GetInteractionsDto } from "./dto/get-interactions.dto";
 import { errors } from "src/utils/catalog.errors";
 import { GetCommentsDto } from "./dto/get-comments.dto";
 import { GetEmojiTotalDto } from "./dto/get-emoji-total.dto";
+import { parseTimestampRange } from "./timestamp-range";
 
 interface CustomError {
   category: number,
@@ -18,6 +18,24 @@ type ValidateInteractionsRequestFunc = (body: GetInteractionsDto) => CustomError
 type ValidateCommentsRequestFunc = (body: GetCommentsDto) => CustomError[];
 type ValidateEmojiRequestFunc = (body: GetEmojiTotalDto) => CustomError[];
 
+const validateTimestamp = (body: { timestamp?: { start: string; end: string } }) => {
+  const notifications: CustomError[] = [];
+  const { start, end } = parseTimestampRange(body.timestamp);
+
+  if (body.timestamp?.start && !start.isValid) {
+    notifications.push(errors.BAD_REQ_GEN('009').notifications[0]);
+  }
+
+  if (body.timestamp?.end && !end.isValid) {
+    notifications.push(errors.BAD_REQ_GEN('010').notifications[0]);
+  }
+
+  if (start?.isValid && end?.isValid && start > end) {
+    notifications.push(errors.BAD_REQ_GEN('013').notifications[0]);
+  }
+
+  return notifications;
+};
 
 export const validateInteractionsRequest: ValidateInteractionsRequestFunc = (body) => {
   let notifications: CustomError[] = [];
@@ -45,19 +63,7 @@ export const validateInteractionsRequest: ValidateInteractionsRequestFunc = (bod
     }
   }
 
-  if (body.timestamp.start) {
-    const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss').isValid;
-    if (!startDateUTC) {
-      notifications.push(errors.BAD_REQ_GEN('009').notifications[0]);
-    }
-  }
-
-  if (body.timestamp.end) {
-    const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss').isValid;
-    if (!endDateUTC) {
-      notifications.push(errors.BAD_REQ_GEN('010').notifications[0]);
-    }
-  }
+  notifications = notifications.concat(validateTimestamp(body));
 
   if (body) {}
 
@@ -78,19 +84,7 @@ export const validateCommentsRequest: ValidateCommentsRequestFunc = (body) => {
     }
   }
 
-  if (body.timestamp.start) {
-    const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss').isValid;
-    if (!startDateUTC) {
-      notifications.push(errors.BAD_REQ_GEN('009').notifications[0]);
-    }
-  }
-
-  if (body.timestamp.end) {
-    const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss').isValid;
-    if (!endDateUTC) {
-      notifications.push(errors.BAD_REQ_GEN('010').notifications[0]);
-    }
-  }
+  notifications.push(...validateTimestamp(body));
 
   return notifications;
 
@@ -100,19 +94,7 @@ export const validateEmojiRequest: ValidateEmojiRequestFunc = (body) => {
 
   const notifications: CustomError[] = [];
 
-  if (body.timestamp.start) {
-    const startDateUTC = DateTime.fromFormat(body.timestamp.start, 'yyyy-MM-dd HH:mm:ss').isValid;
-    if (!startDateUTC) {
-      notifications.push(errors.BAD_REQ_GEN('009').notifications[0]);
-    }
-  }
-
-  if (body.timestamp.end) {
-    const endDateUTC = DateTime.fromFormat(body.timestamp.end, 'yyyy-MM-dd HH:mm:ss').isValid;
-    if (!endDateUTC) {
-      notifications.push(errors.BAD_REQ_GEN('010').notifications[0]);
-    }
-  }
+  notifications.push(...validateTimestamp(body));
 
   return notifications;
 
