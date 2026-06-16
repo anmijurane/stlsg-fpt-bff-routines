@@ -1,11 +1,8 @@
-import { IsEnum, IsInt, IsString, Min, ValidateIf } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Min, ValidateIf } from 'class-validator';
 import { RoutineType } from 'src/app-types/interactions';
-import { RoutineFeedbackType, RoutineFeedbackValue } from '../entities/routine-feedback.entity';
+import { RoutineFeedbackValue } from '../entities/routine-feedback.entity';
 
 export class RoutineFeedbackDto {
-  // @IsEnum(['feedback_routine', 'feedback_exercise'])
-  // type: RoutineFeedbackType;
-
   @IsEnum(['liked', 'disliked'])
   value: RoutineFeedbackValue;
 
@@ -13,7 +10,8 @@ export class RoutineFeedbackDto {
   routine: RoutineType;
 
   @IsString()
-  exercise_id?: string;
+  @IsOptional()
+  exercise_id?: string | null;
 
   @IsInt()
   @Min(1)
