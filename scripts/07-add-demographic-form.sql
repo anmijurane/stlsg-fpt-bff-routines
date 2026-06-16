@@ -48,8 +48,13 @@ CREATE TABLE IF NOT EXISTS demographic_forms (
   contact_phone TEXT,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT demographic_forms_contact_required
-    CHECK (NULLIF(BTRIM(contact_email), '') IS NOT NULL
-        OR NULLIF(BTRIM(contact_phone), '') IS NOT NULL)
+    CHECK (
+      membership != 'invite'
+      OR (
+        NULLIF(BTRIM(contact_email), '') IS NOT NULL
+        OR NULLIF(BTRIM(contact_phone), '') IS NOT NULL
+      )
+    )
 );
 
 CREATE INDEX IF NOT EXISTS idx_demographic_forms_session_time
