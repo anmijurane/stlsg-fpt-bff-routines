@@ -16,6 +16,8 @@ import { RoutineFeedbackDto } from './dto/routine-feedback-req.dto';
 import { RoutineFeedback, RoutineFeedbackType } from './entities/routine-feedback.entity';
 import { Exercises } from 'src/common/entities/exercises.entity';
 import { Events } from 'src/interactions/entities/events.entity';
+import { DemographicFormReqDto } from './dto/demographic-form-req.dto';
+import { DemographicForm } from './entities/demographic-form.entity';
 
 @Injectable()
 export class FeedbackService {
@@ -154,4 +156,62 @@ export class FeedbackService {
       await queryRunner.release();
     }
   }
+
+  async createDemographicData(session_ref: string, body: DemographicFormReqDto) {
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const session = await queryRunner.manager.findOneBy(Sessions, {
+        session_ref: session_ref,
+      });
+      if (!session) {
+        throw new NotFoundException('Session not found');
+      }
+
+      const createdAt = new Date();
+      const demographicData = queryRunner.manager.create(DemographicForm, {
+        session_id: session.id,
+        gender: body.gender,
+        age_range: body.age_range,
+        membership: body.membership,
+        contact_email: body.contact.email ?? null,
+        contact_phone: body.contact.phone ?? null,
+        created_at: createdAt,
+      });
+      const savedDemographicData = await queryRunner.manager.save(demographicData);
+
+      const event = queryRunner.manager.create(Events, {
+        session_id: session.id,
+        page_view_id: null,
+        type: 'demographic_form',
+        exercise_id: null,
+        exercise_name: null,
+        routine: null,
+        level_id: null,
+        day_routine: null,
+        created_at: createdAt,
+      });
+      const savedEvent = await queryRunner.manager.save(event);
+
+      await queryRunner.commitTransaction();
+
+      return {
+        id: savedDemographicData.id,
+        event_id: savedEvent.id
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Could not save demographic data');
+    } finally {
+      await queryRunner.release();
+    }
+
+  }
+
 }

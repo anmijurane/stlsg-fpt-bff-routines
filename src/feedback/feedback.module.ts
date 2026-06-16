@@ -9,6 +9,7 @@ import { Credential } from 'src/common/entities/credential.entity';
 import { RoutineFeedback } from './entities/routine-feedback.entity';
 import { Events } from 'src/interactions/entities/events.entity';
 import { Exercises } from 'src/common/entities/exercises.entity';
+import { DemographicForm } from './entities/demographic-form.entity';
 
 @Module({
   controllers: [FeedbackController],
@@ -20,7 +21,8 @@ import { Exercises } from 'src/common/entities/exercises.entity';
     Events,
     Exercises,
     Role,
-    Credential
+    Credential,
+    DemographicForm
   ])],
 })
 export class FeedbackModule {}

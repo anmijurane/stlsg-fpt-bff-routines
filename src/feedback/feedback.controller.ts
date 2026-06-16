@@ -13,6 +13,7 @@ import { UserContext } from './types';
 import { UUID } from 'node:crypto';
 import { Auth } from 'src/common/decorators/auth.decorator';
 import { RoutineFeedbackDto } from './dto/routine-feedback-req.dto';
+import { DemographicFormReqDto } from './dto/demographic-form-req.dto';
 
 @Controller('/api/feedback')
 export class FeedbackController {
@@ -86,5 +87,30 @@ export class FeedbackController {
       });
     }
     return this.feedbackService.createRoutineFeedback(userContext.session_id, body);
+  }
+
+  @Post('/demographic-form')
+  @Auth('admin', 'creator')
+  async createDemographicForm(
+    @Body() body: DemographicFormReqDto,
+    @Headers() headers: Record<string, string>,
+  ) {
+    const userContextBase64 = headers['user-context'];
+    if (!userContextBase64) {
+      throw new BadRequestException({
+        data: null,
+        notification: [{ message: 'userContext invalid' }],
+      });
+    }
+    const userContextJsonRaw = decodeBase64(userContextBase64);
+    const userContext = JSON.parse(userContextJsonRaw) as UserContext;
+    if (!userContext.ip || !userContext.session_id || !userContext.user_agent) {
+      throw new BadRequestException({
+        data: null,
+        notification: [{ message: 'userContext not exist' }],
+      });
+    }
+
+    return this.feedbackService.createDemographicData(userContext.session_id, body);
   }
 }
