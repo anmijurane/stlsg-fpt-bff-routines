@@ -13,7 +13,7 @@ export const IsContactValid = (validationOptions?: ValidationOptions) => (object
         if (!contact || typeof contact !== 'object') return false;
         const email = typeof contact.email === 'string' ? contact.email.trim() : '';
         const phone = typeof contact.phone === 'string' ? contact.phone.trim() : '';
-        return email.length > 0 || phone.length > 0;
+        return email || phone;
       },
       defaultMessage() {
         return 'At least one contact method (email or phone) must be provided and not empty';
@@ -47,10 +47,11 @@ export class DemographicFormReqDto {
   @IsIn(['classic-card', 'pf-black-card', 'invite'])
   membership: DemographicMembership;
 
+  @ValidateIf(o => o.membership === 'invite')
   @IsNotEmpty()
   @IsObject()
   @ValidateNested()
   @Type(() => ContactDto)
   @IsContactValid()
-  contact: ContactDto;
+  contact?: ContactDto;
 }

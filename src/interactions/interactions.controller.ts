@@ -12,6 +12,7 @@ import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
 import { GetCommentsDto } from './dto/get-comments.dto';
 import { Auth } from 'src/common/decorators/auth.decorator';
 import { GetDemographicFormValuesDto } from './dto/get-demographic-form-values.dto';
+import { GetDemographicSummaryDto } from './dto/get-demographic-summary.dto';
 
 @Controller('/v1/analytics')
 export class InteractionsController {
@@ -46,6 +47,13 @@ export class InteractionsController {
   @Auth('admin', 'consultor')
   getDemographics(@Body() body: GetDemographicFormValuesDto) {
     return this.interactionsService.getDemographics(body);
+  }
+
+  @Post('/demographics/summary')
+  @HttpCode(HttpStatus.OK)
+  @Auth('admin', 'consultor')
+  getDemographicsSummary(@Body() body: GetDemographicSummaryDto) {
+    return this.interactionsService.getDemographicsSummary(body);
   }
 
 }

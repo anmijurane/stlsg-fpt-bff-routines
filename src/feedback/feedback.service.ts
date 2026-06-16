@@ -177,8 +177,8 @@ export class FeedbackService {
         gender: body.gender,
         age_range: body.age_range,
         membership: body.membership,
-        contact_email: body.contact.email ?? null,
-        contact_phone: body.contact.phone ?? null,
+        contact_email: body.contact?.email ?? null,
+        contact_phone: body.contact?.phone ?? null,
         created_at: createdAt,
       });
       const savedDemographicData = await queryRunner.manager.save(demographicData);

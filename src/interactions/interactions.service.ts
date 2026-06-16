@@ -13,11 +13,12 @@ import { GetCommentsDto } from './dto/get-comments.dto';
 import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
 import { GetInteractionsDto } from './dto/get-interactions.dto';
 import { GetDemographicFormValuesDto } from './dto/get-demographic-form-values.dto';
+import { GetDemographicSummaryDto } from './dto/get-demographic-summary.dto';
 import { Clubs } from 'src/common/entities/clubs.entity';
 import { Feedback } from 'src/feedback/entities/feedback.entity';
 import { DemographicForm } from 'src/feedback/entities/demographic-form.entity';
 import { errors } from 'src/utils/catalog.errors';
-import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest, validateDemographicsRequest } from './validate_request';
+import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest, validateDemographicsRequest, validateDemographicsSummaryRequest } from './validate_request';
 import { parseTimestampRange } from './timestamp-range';
 
 @Injectable()
@@ -609,6 +610,140 @@ export class InteractionsService {
         code: 'E_BFF-ROUTINES-500_027',
         message: `Error getting demographics: ${error.message}`,
         name: 'E_BFF-ROUTINES-500_027',
+      });
+    }
+  }
+
+  async getDemographicsSummary(body: GetDemographicSummaryDto) {
+    try {
+      const page = body.pagination?.page || 1;
+      const limit = body.pagination?.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const notifications = validateDemographicsSummaryRequest(body);
+
+      if (body.club_id) {
+        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        if (!clubs) {
+          notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
+        }
+      }
+
+      if (notifications.length > 0) {
+        throw new BadRequestException({
+          data: null,
+          pagination: null,
+          notifications: notifications
+        });
+      }
+
+      const baseQueryBuilder = this.dataSource
+        .createQueryBuilder()
+        .from(DemographicForm, 'df')
+        .innerJoin(Sessions, 's', 's.id = df.session_id')
+        .leftJoin(Clubs, 'c', 'c.id = s.club_id');
+
+      if (body.club_id) {
+        baseQueryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+      }
+
+      const timestampRange = parseTimestampRange(body.timestamp);
+
+      if (timestampRange.start?.isValid) {
+        const startDateUTC = timestampRange.start.toUTC().toJSDate();
+
+        baseQueryBuilder.andWhere('df.created_at >= :start', { start: startDateUTC });
+      }
+
+      if (timestampRange.endExclusive?.isValid) {
+        const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
+
+        baseQueryBuilder.andWhere('df.created_at < :endExclusive', { endExclusive: endDateUTC });
+      }
+
+      const totalItemsResult = await baseQueryBuilder
+        .clone()
+        .select('COUNT(DISTINCT s.club_id)', 'total_items')
+        .getRawOne();
+      const totalItems = +(totalItemsResult?.total_items || 0);
+
+      const queryBuilder = baseQueryBuilder
+        .clone()
+        .select([
+          's.club_id AS club_id',
+          'c.name AS club_name',
+          'COUNT(df.id) AS total_records',
+          `SUM(CASE WHEN df.gender = 'male' THEN 1 ELSE 0 END) AS male_count`,
+          `SUM(CASE WHEN df.gender = 'female' THEN 1 ELSE 0 END) AS female_count`,
+          `SUM(CASE WHEN df.gender = 'other' THEN 1 ELSE 0 END) AS other_count`,
+          `SUM(CASE WHEN df.age_range = '<18' THEN 1 ELSE 0 END) AS age_less_than_18_count`,
+          `SUM(CASE WHEN df.age_range = '18-24' THEN 1 ELSE 0 END) AS age_18_24_count`,
+          `SUM(CASE WHEN df.age_range = '25-34' THEN 1 ELSE 0 END) AS age_25_34_count`,
+          `SUM(CASE WHEN df.age_range = '35-44' THEN 1 ELSE 0 END) AS age_35_44_count`,
+          `SUM(CASE WHEN df.age_range = '45-54' THEN 1 ELSE 0 END) AS age_45_54_count`,
+          `SUM(CASE WHEN df.age_range = '55-64' THEN 1 ELSE 0 END) AS age_55_64_count`,
+          `SUM(CASE WHEN df.age_range = '65+' THEN 1 ELSE 0 END) AS age_65_plus_count`,
+          `SUM(CASE WHEN df.membership = 'classic-card' THEN 1 ELSE 0 END) AS classic_card_count`,
+          `SUM(CASE WHEN df.membership = 'pf-black-card' THEN 1 ELSE 0 END) AS pf_black_card_count`,
+          `SUM(CASE WHEN df.membership = 'invite' THEN 1 ELSE 0 END) AS invite_count`,
+        ])
+        .groupBy('s.club_id')
+        .addGroupBy('c.name')
+        .orderBy('s.club_id', 'ASC')
+        .offset(skip)
+        .limit(limit);
+
+      const rawResults = await queryBuilder.getRawMany();
+
+      const data = rawResults.map((row) => ({
+        club_id: row.club_id,
+        club_name: row.club_name,
+        total_records: +row.total_records,
+        by_gender: {
+          male: +row.male_count,
+          female: +row.female_count,
+          other: +row.other_count,
+        },
+        by_age_range: {
+          '<18': +row.age_less_than_18_count,
+          '18-24': +row.age_18_24_count,
+          '25-34': +row.age_25_34_count,
+          '35-44': +row.age_35_44_count,
+          '45-54': +row.age_45_54_count,
+          '55-64': +row.age_55_64_count,
+          '65+': +row.age_65_plus_count,
+        },
+        by_membership: {
+          'classic-card': +row.classic_card_count,
+          'pf-black-card': +row.pf_black_card_count,
+          invite: +row.invite_count,
+        },
+      }));
+
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return {
+        data,
+        pagination: {
+          total_items_per_page: rawResults.length,
+          total_items: totalItems,
+          total_pages: +totalPages,
+          current_page: +page,
+        },
+        notifications: [],
+      };
+
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error('Error getting demographics summary', error);
+      throw new InternalServerErrorException({
+        status: 500,
+        category: '28',
+        code: 'E_BFF-ROUTINES-500_028',
+        message: `Error getting demographics summary: ${error.message}`,
+        name: 'E_BFF-ROUTINES-500_028',
       });
     }
   }

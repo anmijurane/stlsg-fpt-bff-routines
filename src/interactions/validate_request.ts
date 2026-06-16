@@ -4,6 +4,7 @@ import { GetCommentsDto } from "./dto/get-comments.dto";
 import { GetEmojiTotalDto } from "./dto/get-emoji-total.dto";
 import { parseTimestampRange } from "./timestamp-range";
 import { GetDemographicFormValuesDto } from "./dto/get-demographic-form-values.dto";
+import { GetDemographicSummaryDto } from "./dto/get-demographic-summary.dto";
 
 interface CustomError {
   category: number,
@@ -19,6 +20,7 @@ type ValidateInteractionsRequestFunc = (body: GetInteractionsDto) => CustomError
 type ValidateCommentsRequestFunc = (body: GetCommentsDto) => CustomError[];
 type ValidateEmojiRequestFunc = (body: GetEmojiTotalDto) => CustomError[];
 type ValidateDemographicsRequestFunc = (body: GetDemographicFormValuesDto) => CustomError[];
+type ValidateDemographicsSummaryRequestFunc = (body: GetDemographicSummaryDto) => CustomError[];
 
 const validateTimestamp = (body: { timestamp?: { start: string; end: string } }) => {
   const notifications: CustomError[] = [];
@@ -125,4 +127,10 @@ export const validateDemographicsRequest: ValidateDemographicsRequestFunc = (bod
 
   return notifications;
 
+}
+
+export const validateDemographicsSummaryRequest: ValidateDemographicsSummaryRequestFunc = (body) => {
+  const notifications: CustomError[] = [];
+  notifications.push(...validateTimestamp(body));
+  return notifications;
 }
