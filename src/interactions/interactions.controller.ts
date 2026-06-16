@@ -1,4 +1,10 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
 import { InteractionsService } from './interactions.service';
 import { CreateInteractionDto } from './dto/create-interaction.dto';
 import { GetInteractionsDto } from './dto/get-interactions.dto';
@@ -34,8 +40,9 @@ export class InteractionsController {
   getContableEmojiBehavior(@Body() body: GetEmojiTotalDto) {
     return this.interactionsService.getEmojiTotal(body);
   }
-  
+
   @Post('/demographics')
+  @HttpCode(HttpStatus.OK)
   @Auth('admin', 'consultor')
   getDemographics(@Body() body: GetDemographicFormValuesDto) {
     return this.interactionsService.getDemographics(body);
