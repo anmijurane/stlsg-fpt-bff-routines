@@ -102,8 +102,6 @@ export class FeedbackService {
         throw new NotFoundException('Session not found');
       }
 
-      console.log(session.id);
-
       let exercise: Exercises | null = null;
       if (typeEvent === 'feedback_exercise') {
         exercise = await queryRunner.manager.findOneBy(Exercises, {

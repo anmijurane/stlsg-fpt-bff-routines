@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS routine_feedback (
   exercise_id TEXT REFERENCES exercises(id),
   level_id    SMALLINT NOT NULL REFERENCES routine_levels(id),
   day_routine INT NOT NULL,
+  page_view_id BIGINT REFERENCES page_views (id),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT routine_feedback_type_check
     CHECK (type::TEXT IN ('feedback_routine', 'feedback_exercise')),
