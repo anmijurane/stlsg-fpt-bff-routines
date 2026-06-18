@@ -11,6 +11,7 @@ import { RoutineLevels } from 'src/common/entities/routine_levels.entity';
 import { Role } from 'src/common/entities/role.entity';
 import { Credential } from 'src/common/entities/credential.entity';
 import { DemographicForm } from 'src/feedback/entities/demographic-form.entity';
+import { RoutineFeedback } from 'src/feedback/entities/routine-feedback.entity';
 
 @Module({
   controllers: [InteractionsController],
@@ -25,6 +26,7 @@ import { DemographicForm } from 'src/feedback/entities/demographic-form.entity';
     Role,
     Credential,
     DemographicForm,
+    RoutineFeedback,
   ])],
 })
 export class InteractionsModule {}

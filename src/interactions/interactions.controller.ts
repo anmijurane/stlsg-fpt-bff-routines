@@ -13,6 +13,7 @@ import { GetCommentsDto } from './dto/get-comments.dto';
 import { Auth } from 'src/common/decorators/auth.decorator';
 import { GetDemographicFormValuesDto } from './dto/get-demographic-form-values.dto';
 import { GetDemographicSummaryDto } from './dto/get-demographic-summary.dto';
+import { GetRoutineFeedbackSummaryDto } from './dto/get-routine-feedback-summary.dto';
 
 @Controller('/v1/analytics')
 export class InteractionsController {
@@ -54,6 +55,13 @@ export class InteractionsController {
   @Auth('admin', 'consultor')
   getDemographicsSummary(@Body() body: GetDemographicSummaryDto) {
     return this.interactionsService.getDemographicsSummary(body);
+  }
+
+  @Post('/routine-feedback/summary')
+  @HttpCode(HttpStatus.OK)
+  @Auth('admin', 'consultor')
+  getRoutineFeedbackSummary(@Body() body: GetRoutineFeedbackSummaryDto) {
+    return this.interactionsService.getRoutineFeedbackSummary(body);
   }
 
 }

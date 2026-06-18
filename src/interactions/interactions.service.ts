@@ -18,8 +18,10 @@ import { Clubs } from 'src/common/entities/clubs.entity';
 import { Feedback } from 'src/feedback/entities/feedback.entity';
 import { DemographicForm } from 'src/feedback/entities/demographic-form.entity';
 import { errors } from 'src/utils/catalog.errors';
-import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest, validateDemographicsRequest, validateDemographicsSummaryRequest } from './validate_request';
+import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest, validateDemographicsRequest, validateDemographicsSummaryRequest, validateRoutineFeedbackSummaryRequest } from './validate_request';
 import { parseTimestampRange } from './timestamp-range';
+import { RoutineFeedback } from 'src/feedback/entities/routine-feedback.entity';
+import { GetRoutineFeedbackSummaryDto } from './dto/get-routine-feedback-summary.dto';
 
 @Injectable()
 export class InteractionsService {
@@ -748,6 +750,173 @@ export class InteractionsService {
     }
   }
 
+  async getRoutineFeedbackSummary(body: GetRoutineFeedbackSummaryDto) {
+    try {
+      const page = body.pagination?.page || 1;
+      const limit = body.pagination?.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const notifications = validateRoutineFeedbackSummaryRequest(body);
+
+      if (body.club_id) {
+        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        if (!clubs) {
+          notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
+        }
+      }
+
+      if (notifications.length > 0) {
+        throw new BadRequestException({
+          data: null,
+          pagination: null,
+          notifications: notifications
+        });
+      }
+
+      const baseQueryBuilder = this.dataSource
+        .createQueryBuilder()
+        .from(RoutineFeedback, 'rf')
+        .innerJoin(Sessions, 's', 's.id = rf.session_id')
+        .leftJoin(Clubs, 'c', 'c.id = s.club_id');
+
+      if (body.club_id) {
+        baseQueryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+      }
+
+      const timestampRange = parseTimestampRange(body.timestamp);
+
+      if (timestampRange.start?.isValid) {
+        const startDateUTC = timestampRange.start.toUTC().toJSDate();
+
+        baseQueryBuilder.andWhere('rf.created_at >= :start', { start: startDateUTC });
+      }
+
+      if (timestampRange.endExclusive?.isValid) {
+        const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
+
+        baseQueryBuilder.andWhere('rf.created_at < :endExclusive', { endExclusive: endDateUTC });
+      }
+
+      const totalItemsResult = await baseQueryBuilder
+        .clone()
+        .select('COUNT(DISTINCT s.club_id)', 'total_items')
+        .getRawOne();
+      const totalItems = +(totalItemsResult?.total_items || 0);
+
+      const clubRows = await baseQueryBuilder
+        .clone()
+        .select([
+          's.club_id AS club_id',
+          'c.name AS club_name',
+          'COUNT(rf.id) AS total_feedback',
+        ])
+        .groupBy('s.club_id')
+        .addGroupBy('c.name')
+        .orderBy('s.club_id', 'ASC')
+        .offset(skip)
+        .limit(limit)
+        .getRawMany();
+
+      const clubIds = clubRows.map((row) => row.club_id);
+      const routineTypes: RoutineType[] = ['adaptation', 'muscle_gain', 'health', 'fat_burning'];
+      const routineCountersByClub = new Map<string, Record<RoutineType, { liked: number; disliked: number }>>();
+      const exercisesByClub = new Map<string, Array<{ id: string; name: string; liked: number; disliked: number }>>();
+
+      if (clubIds.length > 0) {
+        const routineRows = await baseQueryBuilder
+          .clone()
+          .select([
+            's.club_id AS club_id',
+            'rf.routine AS routine',
+            `SUM(CASE WHEN rf.value = 'liked' THEN 1 ELSE 0 END) AS liked`,
+            `SUM(CASE WHEN rf.value = 'disliked' THEN 1 ELSE 0 END) AS disliked`,
+          ])
+          .andWhere('s.club_id IN (:...clubIds)', { clubIds })
+          .groupBy('s.club_id')
+          .addGroupBy('rf.routine')
+          .getRawMany();
+
+        routineRows.forEach((row) => {
+          if (!routineCountersByClub.has(row.club_id)) {
+            routineCountersByClub.set(row.club_id, this.createRoutineFeedbackCounters(routineTypes));
+          }
+
+          routineCountersByClub.get(row.club_id)[row.routine] = {
+            liked: +row.liked,
+            disliked: +row.disliked,
+          };
+        });
+
+        const exerciseRows = await baseQueryBuilder
+          .clone()
+          .leftJoin(Exercises, 'ex', 'ex.id = rf.exercise_id')
+          .select([
+            's.club_id AS club_id',
+            'rf.exercise_id AS id',
+            'COALESCE(ex.name, rf.exercise_id) AS name',
+            `SUM(CASE WHEN rf.value = 'liked' THEN 1 ELSE 0 END) AS liked`,
+            `SUM(CASE WHEN rf.value = 'disliked' THEN 1 ELSE 0 END) AS disliked`,
+          ])
+          .andWhere('s.club_id IN (:...clubIds)', { clubIds })
+          .andWhere('rf.exercise_id IS NOT NULL')
+          .groupBy('s.club_id')
+          .addGroupBy('rf.exercise_id')
+          .addGroupBy('ex.name')
+          .orderBy('s.club_id', 'ASC')
+          .addOrderBy('rf.exercise_id', 'ASC')
+          .getRawMany();
+
+        exerciseRows.forEach((row) => {
+          const exercise = {
+            id: row.id,
+            name: row.name,
+            liked: +row.liked,
+            disliked: +row.disliked,
+          };
+
+          exercisesByClub.set(row.club_id, [
+            ...(exercisesByClub.get(row.club_id) || []),
+            exercise,
+          ]);
+        });
+      }
+
+      const data = clubRows.map((row) => ({
+        club_id: row.club_id,
+        club_name: row.club_name,
+        total_feedback: +row.total_feedback,
+        by_routine_type: routineCountersByClub.get(row.club_id) || this.createRoutineFeedbackCounters(routineTypes),
+        by_exercises: exercisesByClub.get(row.club_id) || [],
+      }));
+
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return {
+        data,
+        pagination: {
+          total_items_per_page: data.length,
+          total_items: totalItems,
+          total_pages: +totalPages,
+          current_page: +page,
+        },
+        notifications: [],
+      };
+
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error('Error getting routine feedback summary', error);
+      throw new InternalServerErrorException({
+        status: 500,
+        category: '29',
+        code: 'E_BFF-ROUTINES-500_029',
+        message: `Error getting routine feedback summary: ${error.message}`,
+        name: 'E_BFF-ROUTINES-500_029',
+      });
+    }
+  }
+
   async getEmojiTotal(body: GetEmojiTotalDto) {
 
     try {
@@ -840,5 +1009,15 @@ export class InteractionsService {
       });
     }
 
+  }
+
+  private createRoutineFeedbackCounters(routineTypes: RoutineType[]) {
+    return routineTypes.reduce((counters, routineType) => ({
+      ...counters,
+      [routineType]: {
+        liked: 0,
+        disliked: 0,
+      },
+    }), {} as Record<RoutineType, { liked: number; disliked: number }>);
   }
 }
