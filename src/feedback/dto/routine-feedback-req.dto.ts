@@ -20,4 +20,11 @@ export class RoutineFeedbackDto {
   @IsInt()
   @Min(1)
   day_routine: number;
+
+  @IsString()
+  page_path: string;
+  
+  @IsString()
+  @IsOptional()
+  query_path?: string | null;
 }

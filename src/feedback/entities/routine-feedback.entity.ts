@@ -3,6 +3,7 @@ import { EventType, RoutineType } from 'src/app-types/interactions';
 import { Exercises } from 'src/common/entities/exercises.entity';
 import { RoutineLevels } from 'src/common/entities/routine_levels.entity';
 import { Sessions } from 'src/interactions/entities/sessions.entity';
+import { PageViews } from 'src/interactions/entities/page_views.entity';
 
 export type RoutineFeedbackType = Extract<EventType, 'feedback_routine' | 'feedback_exercise'>;
 export type RoutineFeedbackValue = 'liked' | 'disliked';
@@ -59,4 +60,11 @@ export class RoutineFeedback {
 
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
+
+  @Column({ type: 'bigint', nullable: true })
+  page_view_id: string | null;
+
+  @ManyToOne(() => PageViews)
+  @JoinColumn({ name: 'page_view_id' })
+  page_view: PageViews;
 }
