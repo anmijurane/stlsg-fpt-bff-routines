@@ -23,6 +23,16 @@ import { parseTimestampRange } from './timestamp-range';
 import { RoutineFeedback } from 'src/feedback/entities/routine-feedback.entity';
 import { GetRoutineFeedbackSummaryDto } from './dto/get-routine-feedback-summary.dto';
 
+type RoutineFeedbackCount = {
+  liked: number;
+  disliked: number;
+};
+
+type RoutineFeedbackCounters = Record<
+  RoutineType,
+  Record<string, Record<string, RoutineFeedbackCount>>
+>;
+
 @Injectable()
 export class InteractionsService {
 
@@ -819,7 +829,7 @@ export class InteractionsService {
 
       const clubIds = clubRows.map((row) => row.club_id);
       const routineTypes: RoutineType[] = ['adaptation', 'muscle_gain', 'health', 'fat_burning'];
-      const routineCountersByClub = new Map<string, Record<RoutineType, { liked: number; disliked: number }>>();
+      const routineCountersByClub = new Map<string, RoutineFeedbackCounters>();
       const exercisesByClub = new Map<string, Array<{ id: string; name: string; liked: number; disliked: number }>>();
 
       if (clubIds.length > 0) {
@@ -828,12 +838,16 @@ export class InteractionsService {
           .select([
             's.club_id AS club_id',
             'rf.routine AS routine',
+            'rf.level_id AS level_id',
+            'rf.day_routine AS day_routine',
             `SUM(CASE WHEN rf.value = 'liked' THEN 1 ELSE 0 END) AS liked`,
             `SUM(CASE WHEN rf.value = 'disliked' THEN 1 ELSE 0 END) AS disliked`,
           ])
           .andWhere('s.club_id IN (:...clubIds)', { clubIds })
           .groupBy('s.club_id')
           .addGroupBy('rf.routine')
+          .addGroupBy('rf.level_id')
+          .addGroupBy('rf.day_routine')
           .getRawMany();
 
         routineRows.forEach((row) => {
@@ -841,10 +855,7 @@ export class InteractionsService {
             routineCountersByClub.set(row.club_id, this.createRoutineFeedbackCounters(routineTypes));
           }
 
-          routineCountersByClub.get(row.club_id)[row.routine] = {
-            liked: +row.liked,
-            disliked: +row.disliked,
-          };
+          this.addRoutineFeedbackCount(routineCountersByClub.get(row.club_id), row);
         });
 
         const exerciseRows = await baseQueryBuilder
@@ -1015,9 +1026,34 @@ export class InteractionsService {
     return routineTypes.reduce((counters, routineType) => ({
       ...counters,
       [routineType]: {
-        liked: 0,
-        disliked: 0,
+        level_1: {},
+        level_2: {},
+        level_3: {},
+        level_4: {},
       },
-    }), {} as Record<RoutineType, { liked: number; disliked: number }>);
+    }), {} as RoutineFeedbackCounters);
+  }
+
+  private addRoutineFeedbackCount(
+    counters: RoutineFeedbackCounters,
+    row: {
+      routine: RoutineType;
+      level_id: number | string;
+      day_routine: number | string;
+      liked: number | string;
+      disliked: number | string;
+    },
+  ) {
+    const levelKey = `level_${row.level_id}`;
+    const dayKey = `day_${row.day_routine}`;
+    const currentCount = counters[row.routine][levelKey][dayKey] || {
+      liked: 0,
+      disliked: 0,
+    };
+
+    counters[row.routine][levelKey][dayKey] = {
+      liked: currentCount.liked + Number(row.liked),
+      disliked: currentCount.disliked + Number(row.disliked),
+    };
   }
 }
