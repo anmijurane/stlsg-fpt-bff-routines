@@ -330,9 +330,9 @@ components:
         - pagination
         - notifications
 
-    # ---------- ROUTINE FEEDBACK SUMMARY ----------
+    # ---------- COMMON FILTER REQUEST ----------
 
-    RoutineFeedbackSummaryRequest:
+    CommonFilterRequest:
       type: object
       properties:
         club_id:
@@ -343,6 +343,12 @@ components:
           $ref: "#/components/schemas/DateRange"
         pagination:
           $ref: "#/components/schemas/PaginationRequest"
+    
+    # ---------- ROUTINE FEEDBACK SUMMARY ----------
+    
+    RoutineFeedbackSummaryRequest:
+      allOf:
+        - $ref: "#/components/schemas/CommonFilterRequest"
 
     FeedbackLikesDislikes:
       type: object
