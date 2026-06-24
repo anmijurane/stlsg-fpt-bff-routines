@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: FPT Routines Analytics API
-  version: 1.0.1
+  version: 1.1.0
   description: API de analítica para interacciones, emojis y comentarios del portal de rutinas.
 
 servers:
@@ -330,6 +330,149 @@ components:
         - pagination
         - notifications
 
+    # ---------- ROUTINE FEEDBACK SUMMARY ----------
+
+    RoutineFeedbackSummaryRequest:
+      type: object
+      properties:
+        club_id:
+          type: string
+          nullable: true
+          example: 236a7d40af
+        timestamp:
+          $ref: "#/components/schemas/DateRange"
+        pagination:
+          $ref: "#/components/schemas/PaginationRequest"
+
+    FeedbackLikesDislikes:
+      type: object
+      properties:
+        liked:
+          type: integer
+          example: 3
+        disliked:
+          type: integer
+          example: 0
+      required:
+        - liked
+        - disliked
+
+    RoutineFeedbackLevel:
+      type: object
+      properties:
+        day_1:
+          $ref: "#/components/schemas/FeedbackLikesDislikes"
+        day_2:
+          $ref: "#/components/schemas/FeedbackLikesDislikes"
+        day_3:
+          $ref: "#/components/schemas/FeedbackLikesDislikes"
+        day_4:
+          $ref: "#/components/schemas/FeedbackLikesDislikes"
+      required:
+        - day_1
+        - day_2
+        - day_3
+        - day_4
+
+    RoutineFeedbackLevels:
+      type: object
+      properties:
+        level_1:
+          $ref: "#/components/schemas/RoutineFeedbackLevel"
+        level_2:
+          $ref: "#/components/schemas/RoutineFeedbackLevel"
+        level_3:
+          $ref: "#/components/schemas/RoutineFeedbackLevel"
+        level_4:
+          $ref: "#/components/schemas/RoutineFeedbackLevel"
+      required:
+        - level_1
+        - level_2
+        - level_3
+        - level_4
+
+    RoutineFeedbackByRoutineType:
+      type: object
+      properties:
+        adaptation:
+          $ref: "#/components/schemas/RoutineFeedbackLevels"
+        muscle_gain:
+          $ref: "#/components/schemas/RoutineFeedbackLevels"
+        health:
+          $ref: "#/components/schemas/RoutineFeedbackLevels"
+        fat_burning:
+          $ref: "#/components/schemas/RoutineFeedbackLevels"
+      required:
+        - adaptation
+        - muscle_gain
+        - health
+        - fat_burning
+
+    ExerciseFeedbackItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: a1b2c3d4
+        name:
+          type: string
+          example: Press de Hombro
+        liked:
+          type: integer
+          example: 1
+        disliked:
+          type: integer
+          example: 0
+      required:
+        - id
+        - name
+        - liked
+        - disliked
+
+    RoutineFeedbackSummaryItem:
+      type: object
+      properties:
+        club_id:
+          type: string
+          example: 17cf8bbf29
+        club_name:
+          type: string
+          example: Santa Catarina
+        total_feedback:
+          type: integer
+          example: 7
+        by_routine_type:
+          $ref: "#/components/schemas/RoutineFeedbackByRoutineType"
+        by_exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExerciseFeedbackItem"
+      required:
+        - club_id
+        - club_name
+        - total_feedback
+        - by_routine_type
+        - by_exercises
+
+    RoutineFeedbackSummaryResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineFeedbackSummaryItem"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorResponse"
+          default: []
+      required:
+        - data
+        - pagination
+        - notifications
+
     # ---------- ERRORES COMUNES ----------
     ErrorResponse:
       type: object
@@ -469,3 +612,33 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
+
+  /v1/analytics/routine-feedback/summary:
+    post:
+      summary: Obtener feedback agregado por rutina
+      description: Calcula el promedio de valoraciones (positivas y negativas) por rutina.
+      tags:
+        - Analytics
+      parameters:
+        - $ref: "#/components/parameters/XApiKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineFeedbackSummaryRequest"
+      responses:
+        "200":
+          description: Agregados de feedback por rutina
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutineFeedbackSummaryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    
