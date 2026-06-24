@@ -479,6 +479,101 @@ components:
         - pagination
         - notifications
 
+    # ---------- DEMOGRAPHICS ----------
+
+    RoutineDemographicsRequest:
+      allOf:
+        - type: object
+          properties:
+            session_id:
+              type: string
+              nullable: true
+              example: ""
+            gender:
+              type: string
+              nullable: true
+              example: ""
+            age_range:
+              type: string
+              nullable: true
+              example: ""
+            membership:
+              type: string
+              nullable: true
+              example: ""
+        - $ref: "#/components/schemas/CommonFilterRequest"
+
+    RoutineDemographicsItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "3"
+        session_id:
+          type: string
+          example: "1af6454b-3d9a-49db-8762-42913157b2e3"
+        club_id:
+          type: string
+          example: "7fc28ff6a1"
+        club_name:
+          type: string
+          example: "Zapata Culiacan"
+        gender:
+          type: string
+          example: "male"
+        age_range:
+          type: string
+          example: "25-34"
+        membership:
+          type: string
+          example: "classic-card"
+        contact:
+          type: object
+          properties:
+            phone:
+              type: string
+              example: "5569781245"
+            email:
+              type: string
+              example: ""
+          required:
+            - phone
+            - email
+        created_at:
+          type: string
+          example: "2026-06-15 14:34:16"
+      required:
+        - id
+        - session_id
+        - club_id
+        - club_name
+        - gender
+        - age_range
+        - membership
+        - contact
+        - created_at
+
+    RoutineDemographicsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineDemographicsItem"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorResponse"
+          default: []
+      required:
+        - data
+        - pagination
+        - notifications
+
+    # ---------- ADD NEW SCHEMAS HERE ----------
+
     # ---------- ERRORES COMUNES ----------
     ErrorResponse:
       type: object
@@ -640,6 +735,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RoutineFeedbackSummaryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /v1/analytics/demographics:
+    post:
+      summary: Obtener información demográfica de los usuarios
+      description: Obtiene el desglose demográfico de edad, género y membresía de los usuarios por club.
+      tags:
+        - Analytics
+      parameters:
+        - $ref: "#/components/parameters/XApiKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineDemographicsRequest"
+      responses:
+        "200":
+          description: Datos demográficos de usuarios
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutineDemographicsResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
