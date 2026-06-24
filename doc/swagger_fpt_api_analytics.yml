@@ -572,6 +572,114 @@ components:
         - pagination
         - notifications
 
+    # ---------- DEMOGRAPHICS SUMMARY ----------
+    RoutineDemographicsSummaryRequest:
+      allOf:
+        - $ref: "#/components/schemas/CommonFilterRequest"
+
+    RoutineDemographicsSummaryItem:
+      type: object
+      properties:
+        club_id:
+          type: string
+          example: "17cf8bbf29"
+        club_name:
+          type: string
+          example: "Santa Catarina"
+        total_records:
+          type: integer
+          example: 1
+        by_gender:
+          type: object
+          properties:
+            male:
+              type: integer
+              example: 0
+            female:
+              type: integer
+              example: 1
+            other:
+              type: integer
+              example: 0
+          required:
+            - male
+            - female
+            - other
+        by_age_range:
+          type: object
+          properties:
+            "<18":
+              type: integer
+              example: 0
+            "18-24":
+              type: integer
+              example: 0
+            "25-34":
+              type: integer
+              example: 0
+            "35-44":
+              type: integer
+              example: 1
+            "45-54":
+              type: integer
+              example: 0
+            "55-64":
+              type: integer
+              example: 0
+            "65+":
+              type: integer
+              example: 0
+          required:
+            - "<18"
+            - "18-24"
+            - "25-34"
+            - "35-44"
+            - "45-54"
+            - "55-64"
+            - "65+"
+        by_membership:
+          type: object
+          properties:
+            "classic-card":
+              type: integer
+              example: 1
+            "pf-black-card":
+              type: integer
+              example: 0
+            invite:
+              type: integer
+              example: 0
+          required:
+            - "classic-card"
+            - "pf-black-card"
+            - invite
+      required:
+        - club_id
+        - club_name
+        - total_records
+        - by_gender
+        - by_age_range
+        - by_membership
+
+    RoutineDemographicsSummaryResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineDemographicsSummaryItem"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorResponse"
+          default: []
+      required:
+        - data
+        - pagination
+        - notifications
+
     # ---------- ADD NEW SCHEMAS HERE ----------
 
     # ---------- ERRORES COMUNES ----------
@@ -763,6 +871,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RoutineDemographicsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /v1/analytics/demographics/summary:
+    post:
+      summary: Obtener un resumen de las interacciones demograficas de usuarios por club
+      description: Obtiene un resumen de las interacciones demograficas de usuarios por club, filtra por rango de fechas, etc.
+      tags:
+        - Analytics
+      parameters:
+        - $ref: "#/components/parameters/XApiKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineDemographicsSummaryRequest"
+      responses:
+        "200":
+          description: Datos demográficos de usuarios
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutineDemographicsSummaryResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
