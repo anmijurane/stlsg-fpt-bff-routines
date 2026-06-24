@@ -1,9 +1,15 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Sessions } from "./sessions.entity";
-import { PageViews } from "./page_views.entity";
-import { Exercises } from "../../common/entities/exercises.entity";
-import { RoutineLevels } from "../../common/entities/routine_levels.entity";
-import { EventType, RoutineType } from "src/app-types/interactions";
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Sessions } from './sessions.entity';
+import { PageViews } from './page_views.entity';
+import { Exercises } from '../../common/entities/exercises.entity';
+import { RoutineLevels } from '../../common/entities/routine_levels.entity';
+import { EventType, RoutineType } from 'src/app-types/interactions';
 
 @Entity('events')
 export class Events {
@@ -39,7 +45,7 @@ export class Events {
     ],
     enumName: 'event_type',
     nullable: false,
-    name: 'type'
+    name: 'type',
   })
   type: EventType;
 

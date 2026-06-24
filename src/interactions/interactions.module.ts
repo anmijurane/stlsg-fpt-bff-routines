@@ -16,17 +16,19 @@ import { RoutineFeedback } from 'src/feedback/entities/routine-feedback.entity';
 @Module({
   controllers: [InteractionsController],
   providers: [InteractionsService],
-  imports: [TypeOrmModule.forFeature([
-    Events,
-    PageViews,
-    Sessions,
-    Clubs,
-    Exercises,
-    RoutineLevels,
-    Role,
-    Credential,
-    DemographicForm,
-    RoutineFeedback,
-  ])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Events,
+      PageViews,
+      Sessions,
+      Clubs,
+      Exercises,
+      RoutineLevels,
+      Role,
+      Credential,
+      DemographicForm,
+      RoutineFeedback,
+    ]),
+  ],
 })
 export class InteractionsModule {}

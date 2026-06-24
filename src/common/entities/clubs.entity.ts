@@ -1,8 +1,7 @@
-import { Column, Entity } from "typeorm";
+import { Column, Entity } from 'typeorm';
 
 @Entity('clubs')
 export class Clubs {
-
   @Column({ type: 'text', primary: true })
   id: string;
 
@@ -14,5 +13,4 @@ export class Clubs {
 
   @Column({ type: 'text', nullable: true })
   address: string;
-
 }

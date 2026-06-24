@@ -1,10 +1,4 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { InteractionsService } from './interactions.service';
 import { CreateInteractionDto } from './dto/create-interaction.dto';
 import { GetInteractionsDto } from './dto/get-interactions.dto';
@@ -63,5 +57,4 @@ export class InteractionsController {
   getRoutineFeedbackSummary(@Body() body: GetRoutineFeedbackSummaryDto) {
     return this.interactionsService.getRoutineFeedbackSummary(body);
   }
-
 }

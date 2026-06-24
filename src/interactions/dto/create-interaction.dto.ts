@@ -1,4 +1,4 @@
-import { IsDate, IsObject, IsOptional, IsString } from "class-validator";
+import { IsDate, IsObject, IsOptional, IsString } from 'class-validator';
 
 interface Client {
   ip: string;
@@ -28,5 +28,4 @@ export class CreateInteractionDto {
   @IsString()
   @IsOptional()
   date: string;
-
 }

@@ -1,5 +1,11 @@
-import { Column, Entity, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from "typeorm";
-import { Clubs } from "../../common/entities/clubs.entity";
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Clubs } from '../../common/entities/clubs.entity';
 
 @Entity('sessions')
 export class Sessions {

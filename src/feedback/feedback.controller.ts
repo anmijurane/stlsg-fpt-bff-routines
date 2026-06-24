@@ -62,7 +62,10 @@ export class FeedbackController {
         notification: [{ message: 'userContext invalid' }],
       });
     }
-    return await this.feedbackService.addComment(userContext.session_id, body.comment);
+    return await this.feedbackService.addComment(
+      userContext.session_id,
+      body.comment,
+    );
   }
 
   @Post('/routine-or-exercise')
@@ -72,7 +75,7 @@ export class FeedbackController {
     @Headers() headers: Record<string, string>,
   ) {
     const userContextBase64 = headers['user-context'];
-    if(!userContextBase64){
+    if (!userContextBase64) {
       throw new BadRequestException({
         data: null,
         notification: [{ message: 'userContext invalid' }],
@@ -86,7 +89,10 @@ export class FeedbackController {
         notification: [{ message: 'userContext not exist' }],
       });
     }
-    return this.feedbackService.createRoutineFeedback(userContext.session_id, body);
+    return this.feedbackService.createRoutineFeedback(
+      userContext.session_id,
+      body,
+    );
   }
 
   @Post('/demographic-form')
@@ -111,6 +117,9 @@ export class FeedbackController {
       });
     }
 
-    return this.feedbackService.createDemographicData(userContext.session_id, body);
+    return this.feedbackService.createDemographicData(
+      userContext.session_id,
+      body,
+    );
   }
 }

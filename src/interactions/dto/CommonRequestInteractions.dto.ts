@@ -1,6 +1,5 @@
-import { IsObject, IsOptional, IsString } from "class-validator";
-import { TimestampI } from "src/app-types/interactions";
-
+import { IsObject, IsOptional, IsString } from 'class-validator';
+import { TimestampI } from 'src/app-types/interactions';
 
 export class CommonRequestInteractionsDto {
   @IsString()
@@ -14,5 +13,4 @@ export class CommonRequestInteractionsDto {
   @IsObject()
   @IsOptional()
   timestamp?: TimestampI;
-
 }

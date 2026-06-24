@@ -1,26 +1,45 @@
-import { IsEmail, IsIn, IsNotEmpty, IsObject, IsOptional, IsString, ValidateIf, ValidateNested, registerDecorator, ValidationOptions } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+  registerDecorator,
+  ValidationOptions,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { DemographicAgeRange, DemographicGender, DemographicMembership } from 'src/app-types/demographic-form';
+import {
+  DemographicAgeRange,
+  DemographicGender,
+  DemographicMembership,
+} from 'src/app-types/demographic-form';
 
-export const IsContactValid = (validationOptions?: ValidationOptions) => (object: Object, propertyName: string) => {
-  registerDecorator({
-    name: 'isContactValid',
-    target: object.constructor,
-    propertyName: propertyName,
-    options: validationOptions,
-    validator: {
-      validate(contact: any) {
-        if (!contact || typeof contact !== 'object') return false;
-        const email = typeof contact.email === 'string' ? contact.email.trim() : '';
-        const phone = typeof contact.phone === 'string' ? contact.phone.trim() : '';
-        return email || phone;
+export const IsContactValid =
+  (validationOptions?: ValidationOptions) =>
+  (object: object, propertyName: string) => {
+    registerDecorator({
+      name: 'isContactValid',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(contact: any) {
+          if (!contact || typeof contact !== 'object') return false;
+          const email =
+            typeof contact.email === 'string' ? contact.email.trim() : '';
+          const phone =
+            typeof contact.phone === 'string' ? contact.phone.trim() : '';
+          return email || phone;
+        },
+        defaultMessage() {
+          return 'At least one contact method (email or phone) must be provided and not empty';
+        },
       },
-      defaultMessage() {
-        return 'At least one contact method (email or phone) must be provided and not empty';
-      },
-    },
-  });
-};
+    });
+  };
 
 export class ContactDto {
   @IsOptional()
@@ -47,7 +66,7 @@ export class DemographicFormReqDto {
   @IsIn(['classic-card', 'pf-black-card', 'invite'])
   membership: DemographicMembership;
 
-  @ValidateIf(o => o.membership === 'invite')
+  @ValidateIf((o) => o.membership === 'invite')
   @IsNotEmpty()
   @IsObject()
   @ValidateNested()

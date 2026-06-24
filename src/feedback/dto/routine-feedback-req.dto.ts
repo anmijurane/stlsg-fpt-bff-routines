@@ -1,4 +1,11 @@
-import { IsEnum, IsInt, IsOptional, IsString, Min, ValidateIf } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 import { RoutineType } from 'src/app-types/interactions';
 import { RoutineFeedbackValue } from '../entities/routine-feedback.entity';
 
@@ -23,7 +30,7 @@ export class RoutineFeedbackDto {
 
   @IsString()
   page_path: string;
-  
+
   @IsString()
   @IsOptional()
   query_path?: string | null;

@@ -1,5 +1,15 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { DemographicAgeRange, DemographicGender, DemographicMembership } from 'src/app-types/demographic-form';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import {
+  DemographicAgeRange,
+  DemographicGender,
+  DemographicMembership,
+} from 'src/app-types/demographic-form';
 import { Sessions } from 'src/interactions/entities/sessions.entity';
 
 @Entity('demographic_forms')

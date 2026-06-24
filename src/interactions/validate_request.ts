@@ -1,30 +1,40 @@
-import { GetInteractionsDto } from "./dto/get-interactions.dto";
-import { errors } from "src/utils/catalog.errors";
-import { GetCommentsDto } from "./dto/get-comments.dto";
-import { GetEmojiTotalDto } from "./dto/get-emoji-total.dto";
-import { parseTimestampRange } from "./timestamp-range";
-import { GetDemographicFormValuesDto } from "./dto/get-demographic-form-values.dto";
-import { GetDemographicSummaryDto } from "./dto/get-demographic-summary.dto";
-import { GetRoutineFeedbackSummaryDto } from "./dto/get-routine-feedback-summary.dto";
+import { GetInteractionsDto } from './dto/get-interactions.dto';
+import { errors } from 'src/utils/catalog.errors';
+import { GetCommentsDto } from './dto/get-comments.dto';
+import { GetEmojiTotalDto } from './dto/get-emoji-total.dto';
+import { parseTimestampRange } from './timestamp-range';
+import { GetDemographicFormValuesDto } from './dto/get-demographic-form-values.dto';
+import { GetDemographicSummaryDto } from './dto/get-demographic-summary.dto';
+import { GetRoutineFeedbackSummaryDto } from './dto/get-routine-feedback-summary.dto';
 
 interface CustomError {
-  category: number,
-  code: string,
-  status: number,
+  category: number;
+  code: string;
+  status: number;
   meta: {
-    timestamp: string,
-    log: string,
-  }
+    timestamp: string;
+    log: string;
+  };
 }
 
-type ValidateInteractionsRequestFunc = (body: GetInteractionsDto) => CustomError[];
+type ValidateInteractionsRequestFunc = (
+  body: GetInteractionsDto,
+) => CustomError[];
 type ValidateCommentsRequestFunc = (body: GetCommentsDto) => CustomError[];
 type ValidateEmojiRequestFunc = (body: GetEmojiTotalDto) => CustomError[];
-type ValidateDemographicsRequestFunc = (body: GetDemographicFormValuesDto) => CustomError[];
-type ValidateDemographicsSummaryRequestFunc = (body: GetDemographicSummaryDto) => CustomError[];
-type ValidateRoutineFeedbackSummaryRequestFunc = (body: GetRoutineFeedbackSummaryDto) => CustomError[];
+type ValidateDemographicsRequestFunc = (
+  body: GetDemographicFormValuesDto,
+) => CustomError[];
+type ValidateDemographicsSummaryRequestFunc = (
+  body: GetDemographicSummaryDto,
+) => CustomError[];
+type ValidateRoutineFeedbackSummaryRequestFunc = (
+  body: GetRoutineFeedbackSummaryDto,
+) => CustomError[];
 
-const validateTimestamp = (body: { timestamp?: { start: string; end: string } }) => {
+const validateTimestamp = (body: {
+  timestamp?: { start: string; end: string };
+}) => {
   const notifications: CustomError[] = [];
   const { start, end } = parseTimestampRange(body.timestamp);
 
@@ -43,10 +53,12 @@ const validateTimestamp = (body: { timestamp?: { start: string; end: string } })
   return notifications;
 };
 
-export const validateInteractionsRequest: ValidateInteractionsRequestFunc = (body) => {
+export const validateInteractionsRequest: ValidateInteractionsRequestFunc = (
+  body,
+) => {
   let notifications: CustomError[] = [];
   const routineType = ['adaptation', 'muscle_gain', 'health', 'fat_burning'];
-  const level_and_days_types = [1,2,3,4];
+  const level_and_days_types = [1, 2, 3, 4];
 
   if (body.routine.level) {
     const level = parseInt(body.routine.level, 10);
@@ -71,15 +83,13 @@ export const validateInteractionsRequest: ValidateInteractionsRequestFunc = (bod
 
   notifications = notifications.concat(validateTimestamp(body));
 
-  if (body) {}
+  if (body) {
+  }
 
   return notifications;
-
-}
-
+};
 
 export const validateCommentsRequest: ValidateCommentsRequestFunc = (body) => {
-
   const emoji_types = ['happy', 'neutral', 'sad'];
   const notifications: CustomError[] = [];
 
@@ -93,23 +103,29 @@ export const validateCommentsRequest: ValidateCommentsRequestFunc = (body) => {
   notifications.push(...validateTimestamp(body));
 
   return notifications;
-
-}
+};
 
 export const validateEmojiRequest: ValidateEmojiRequestFunc = (body) => {
-
   const notifications: CustomError[] = [];
 
   notifications.push(...validateTimestamp(body));
 
   return notifications;
+};
 
-}
-
-export const validateDemographicsRequest: ValidateDemographicsRequestFunc = (body) => {
-
+export const validateDemographicsRequest: ValidateDemographicsRequestFunc = (
+  body,
+) => {
   const gender_types = ['male', 'female', 'other'];
-  const age_range_types = ['<18', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+  const age_range_types = [
+    '<18',
+    '18-24',
+    '25-34',
+    '35-44',
+    '45-54',
+    '55-64',
+    '65+',
+  ];
   const membership_types = ['classic-card', 'pf-black-card', 'invite'];
   const notifications: CustomError[] = [];
 
@@ -128,17 +144,18 @@ export const validateDemographicsRequest: ValidateDemographicsRequestFunc = (bod
   notifications.push(...validateTimestamp(body));
 
   return notifications;
+};
 
-}
+export const validateDemographicsSummaryRequest: ValidateDemographicsSummaryRequestFunc =
+  (body) => {
+    const notifications: CustomError[] = [];
+    notifications.push(...validateTimestamp(body));
+    return notifications;
+  };
 
-export const validateDemographicsSummaryRequest: ValidateDemographicsSummaryRequestFunc = (body) => {
-  const notifications: CustomError[] = [];
-  notifications.push(...validateTimestamp(body));
-  return notifications;
-}
-
-export const validateRoutineFeedbackSummaryRequest: ValidateRoutineFeedbackSummaryRequestFunc = (body) => {
-  const notifications: CustomError[] = [];
-  notifications.push(...validateTimestamp(body));
-  return notifications;
-}
+export const validateRoutineFeedbackSummaryRequest: ValidateRoutineFeedbackSummaryRequestFunc =
+  (body) => {
+    const notifications: CustomError[] = [];
+    notifications.push(...validateTimestamp(body));
+    return notifications;
+  };

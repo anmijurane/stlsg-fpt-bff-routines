@@ -14,15 +14,17 @@ import { DemographicForm } from './entities/demographic-form.entity';
 @Module({
   controllers: [FeedbackController],
   providers: [FeedbackService],
-  imports: [TypeOrmModule.forFeature([
-    Feedback,
-    Sessions,
-    RoutineFeedback,
-    Events,
-    Exercises,
-    Role,
-    Credential,
-    DemographicForm
-  ])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Feedback,
+      Sessions,
+      RoutineFeedback,
+      Events,
+      Exercises,
+      Role,
+      Credential,
+      DemographicForm,
+    ]),
+  ],
 })
 export class FeedbackModule {}

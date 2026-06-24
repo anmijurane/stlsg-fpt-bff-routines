@@ -1,4 +1,4 @@
-import { Emoji } from "src/feedback/types";
+import { Emoji } from 'src/feedback/types';
 
 export interface TimestampI {
   start: string;
@@ -16,7 +16,11 @@ export interface PaginationI {
   limit: number;
 }
 
-export type RoutineType = 'adaptation' | 'muscle_gain' | 'health' | 'fat_burning';
+export type RoutineType =
+  | 'adaptation'
+  | 'muscle_gain'
+  | 'health'
+  | 'fat_burning';
 
 export type EventType =
   | 'home'
@@ -50,7 +54,10 @@ export interface EventBuilder {
   day_routine: number;
 }
 
-export type BuilderEvent = Record<TypeView, () => Promise<{ page_view: PageViewBuilder; event: EventBuilder }>>;
+export type BuilderEvent = Record<
+  TypeView,
+  () => Promise<{ page_view: PageViewBuilder; event: EventBuilder }>
+>;
 
 export interface GetCommentsResult {
   club_id: string;

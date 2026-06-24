@@ -1,10 +1,21 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { CreateInteractionDto } from './dto/create-interaction.dto';
 import { Sessions } from './entities/sessions.entity';
 import { PageViews } from './entities/page_views.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BuilderEvent, GetCommentsResult, RoutineType, TypeView } from 'src/app-types/interactions';
+import {
+  BuilderEvent,
+  GetCommentsResult,
+  RoutineType,
+  TypeView,
+} from 'src/app-types/interactions';
 import { decodeQueryString } from 'src/utils/decodeQueryString';
 import { Events } from './entities/events.entity';
 import { Exercises } from 'src/common/entities/exercises.entity';
@@ -18,7 +29,14 @@ import { Clubs } from 'src/common/entities/clubs.entity';
 import { Feedback } from 'src/feedback/entities/feedback.entity';
 import { DemographicForm } from 'src/feedback/entities/demographic-form.entity';
 import { errors } from 'src/utils/catalog.errors';
-import { validateInteractionsRequest, validateCommentsRequest, validateEmojiRequest, validateDemographicsRequest, validateDemographicsSummaryRequest, validateRoutineFeedbackSummaryRequest } from './validate_request';
+import {
+  validateInteractionsRequest,
+  validateCommentsRequest,
+  validateEmojiRequest,
+  validateDemographicsRequest,
+  validateDemographicsSummaryRequest,
+  validateRoutineFeedbackSummaryRequest,
+} from './validate_request';
 import { parseTimestampRange } from './timestamp-range';
 import { RoutineFeedback } from 'src/feedback/entities/routine-feedback.entity';
 import { GetRoutineFeedbackSummaryDto } from './dto/get-routine-feedback-summary.dto';
@@ -35,7 +53,6 @@ type RoutineFeedbackCounters = Record<
 
 @Injectable()
 export class InteractionsService {
-
   private logger = new Logger('InteractionsService');
 
   constructor(
@@ -57,8 +74,12 @@ export class InteractionsService {
 
     try {
       this.logger.log('CREATE INTERACTION');
-      const date = createInteraction?.date ? DateTime.fromISO(createInteraction.date).setZone('America/Mexico_City') : DateTime.now().setZone('America/Mexico_City');
-      const executeDate =  DateTime.fromSQL(date.toSQL()).setZone('UTC')
+      const date = createInteraction?.date
+        ? DateTime.fromISO(createInteraction.date).setZone(
+            'America/Mexico_City',
+          )
+        : DateTime.now().setZone('America/Mexico_City');
+      const executeDate = DateTime.fromSQL(date.toSQL()).setZone('UTC');
 
       const sessionToInsert = {
         session_ref: createInteraction.session_ref,
@@ -72,7 +93,8 @@ export class InteractionsService {
         last_seen_at: executeDate,
       };
 
-      const sessionInsertResult = await queryRunner.manager.createQueryBuilder()
+      const sessionInsertResult = await queryRunner.manager
+        .createQueryBuilder()
         .insert()
         .into(Sessions)
         .values(sessionToInsert)
@@ -86,7 +108,7 @@ export class InteractionsService {
 
       const pageSplit = createInteraction.page.path.split('/');
 
-      const typeView = pageSplit?.[1] || 'home' as TypeView;
+      const typeView = pageSplit?.[1] || ('home' as TypeView);
 
       const builderEvent: BuilderEvent = {
         home: async () => ({
@@ -106,10 +128,12 @@ export class InteractionsService {
             routine: null,
             level_id: null,
             day_routine: null,
-          }
+          },
         }),
         attention: async () => {
-          const { level } = decodeQueryString<{ level: string }>(createInteraction.page.query_string);
+          const { level } = decodeQueryString<{ level: string }>(
+            createInteraction.page.query_string,
+          );
           const routine = pageSplit[2] as RoutineType;
           return {
             page_view: {
@@ -128,11 +152,13 @@ export class InteractionsService {
               routine,
               level_id: parseInt(level, 10),
               day_routine: null,
-            }
-          }
+            },
+          };
         },
         routine: async () => {
-          const { level } = decodeQueryString<{ level: string }>(createInteraction.page.query_string);
+          const { level } = decodeQueryString<{ level: string }>(
+            createInteraction.page.query_string,
+          );
           const routine = pageSplit[2] as RoutineType;
           return {
             page_view: {
@@ -141,7 +167,7 @@ export class InteractionsService {
               page_path: createInteraction.page.path,
               query_string: createInteraction.page.query_string,
               level_id: parseInt(level, 10),
-              visited_at: executeDate.toJSDate()
+              visited_at: executeDate.toJSDate(),
             },
             event: {
               session_id: session.id,
@@ -151,18 +177,24 @@ export class InteractionsService {
               routine,
               level_id: parseInt(level, 10),
               day_routine: null,
-            }
-          }
+            },
+          };
         },
         exercise: async () => {
           let exerciseId = '07893b00';
           let exerciseName = `${pageSplit[2]} | NO CATALOGADO`;
-          const exercise = await queryRunner.manager.findOne(Exercises, { where: { id: pageSplit[2] } });
+          const exercise = await queryRunner.manager.findOne(Exercises, {
+            where: { id: pageSplit[2] },
+          });
           if (exercise) {
             exerciseId = exercise.id;
             exerciseName = exercise.name;
           }
-          const { day, category, level } = decodeQueryString<{ level: string, day: string, category: RoutineType | null }>(createInteraction.page.query_string);
+          const { day, category, level } = decodeQueryString<{
+            level: string;
+            day: string;
+            category: RoutineType | null;
+          }>(createInteraction.page.query_string);
           return {
             page_view: {
               routine: category,
@@ -170,7 +202,7 @@ export class InteractionsService {
               page_path: createInteraction.page.path,
               query_string: createInteraction.page.query_string,
               level_id: parseInt(level, 10),
-              visited_at: executeDate.toJSDate()
+              visited_at: executeDate.toJSDate(),
             },
             event: {
               session_id: session.id,
@@ -180,8 +212,8 @@ export class InteractionsService {
               routine: category,
               level_id: parseInt(level, 10),
               day_routine: parseInt(day, 10),
-            }
-          }
+            },
+          };
         },
       };
 
@@ -197,10 +229,13 @@ export class InteractionsService {
         query_string: createInteraction.page.query_string,
         routine: page_view.routine,
         level_id: page_view.level_id,
-        visited_at: page_view.visited_at
+        visited_at: page_view.visited_at,
       });
 
-      const pageViewInserted = await queryRunner.manager.save(PageViews, pageViewToInsert);
+      const pageViewInserted = await queryRunner.manager.save(
+        PageViews,
+        pageViewToInsert,
+      );
 
       this.logger.log('PAGE VIEW INSERTED');
 
@@ -225,9 +260,8 @@ export class InteractionsService {
       return {
         eventToInsert,
         sessionToInsert: session,
-        pageViewToInsert: pageViewInserted
-      }
-
+        pageViewToInsert: pageViewInserted,
+      };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       if (error instanceof HttpException) {
@@ -250,14 +284,18 @@ export class InteractionsService {
       const notifications = validateInteractionsRequest(body);
 
       if (body.club_id) {
-        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        const clubs = await this.clubsRepository.findOne({
+          where: { id: body.club_id },
+        });
         if (!clubs) {
           notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
         }
       }
 
-      if (body.exercise_id) { 
-        const exercises = await this.exercisesRepository.findOne({ where: { id: body.exercise_id } });
+      if (body.exercise_id) {
+        const exercises = await this.exercisesRepository.findOne({
+          where: { id: body.exercise_id },
+        });
         if (!exercises) {
           notifications.push(errors.BAD_REQ_GEN('012').notifications[0]);
         }
@@ -267,7 +305,7 @@ export class InteractionsService {
         throw new BadRequestException({
           data: null,
           pagination: null,
-          notifications: notifications
+          notifications: notifications,
         });
       }
 
@@ -296,27 +334,39 @@ export class InteractionsService {
         .leftJoin(Exercises, 'ex', 'ex.id = e.exercise_id');
 
       if (body.club_id) {
-        queryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+        queryBuilder.andWhere('s.club_id = :club_id', {
+          club_id: body.club_id,
+        });
       }
 
       if (body.session_id) {
-        queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
+        queryBuilder.andWhere('s.session_ref = :session_ref', {
+          session_ref: body.session_id,
+        });
       }
 
       if (body.exercise_id) {
-        queryBuilder.andWhere('e.exercise_id = :exercise_id', { exercise_id: body.exercise_id });
+        queryBuilder.andWhere('e.exercise_id = :exercise_id', {
+          exercise_id: body.exercise_id,
+        });
       }
 
       if (body.routine?.type) {
-        queryBuilder.andWhere('e.routine = :routine', { routine: body.routine.type });
+        queryBuilder.andWhere('e.routine = :routine', {
+          routine: body.routine.type,
+        });
       }
 
       if (body.routine?.level) {
-        queryBuilder.andWhere('e.level_id = :level_id', { level_id: body.routine.level });
+        queryBuilder.andWhere('e.level_id = :level_id', {
+          level_id: body.routine.level,
+        });
       }
 
       if (body.routine?.day) {
-        queryBuilder.andWhere('e.day_routine = :day_routine', { day_routine: body.routine.day });
+        queryBuilder.andWhere('e.day_routine = :day_routine', {
+          day_routine: body.routine.day,
+        });
       }
 
       const timestampRange = parseTimestampRange(body.timestamp);
@@ -324,13 +374,17 @@ export class InteractionsService {
       if (timestampRange.start?.isValid) {
         const startDateUTC = timestampRange.start.toUTC().toJSDate();
 
-        queryBuilder.andWhere('pv.visited_at >= :start', { start: startDateUTC });
+        queryBuilder.andWhere('pv.visited_at >= :start', {
+          start: startDateUTC,
+        });
       }
 
       if (timestampRange.endExclusive?.isValid) {
         const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
 
-        queryBuilder.andWhere('pv.visited_at < :endExclusive', { endExclusive: endDateUTC });
+        queryBuilder.andWhere('pv.visited_at < :endExclusive', {
+          endExclusive: endDateUTC,
+        });
       }
 
       queryBuilder
@@ -364,8 +418,8 @@ export class InteractionsService {
         },
         page: `${row.page_path}${row.query_string ? `?${row.query_string}` : ''}`,
         timestamp: DateTime.fromJSDate(row.visited_at)
-            .setZone('America/Mexico_City')
-            .toFormat('yyyy-MM-dd HH:mm:ss'),
+          .setZone('America/Mexico_City')
+          .toFormat('yyyy-MM-dd HH:mm:ss'),
       }));
 
       const totalPages = Math.ceil(totalItems / limit);
@@ -378,7 +432,7 @@ export class InteractionsService {
           total_pages: +totalPages,
           current_page: +page,
         },
-        notifications: []
+        notifications: [],
       };
     } catch (error) {
       if (error instanceof HttpException) {
@@ -404,7 +458,9 @@ export class InteractionsService {
       const notifications = validateCommentsRequest(body);
 
       if (body.club_id) {
-        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        const clubs = await this.clubsRepository.findOne({
+          where: { id: body.club_id },
+        });
         if (!clubs) {
           notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
         }
@@ -414,7 +470,7 @@ export class InteractionsService {
         throw new BadRequestException({
           data: null,
           pagination: null,
-          notifications: notifications
+          notifications: notifications,
         });
       }
 
@@ -433,7 +489,9 @@ export class InteractionsService {
         .leftJoin(Clubs, 'c', 'c.id = s.club_id');
 
       if (body.club_id) {
-        queryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+        queryBuilder.andWhere('s.club_id = :club_id', {
+          club_id: body.club_id,
+        });
       }
 
       if (body.emoji) {
@@ -441,7 +499,9 @@ export class InteractionsService {
       }
 
       if (body.session_id) {
-        queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
+        queryBuilder.andWhere('s.session_ref = :session_ref', {
+          session_ref: body.session_id,
+        });
       }
 
       const timestampRange = parseTimestampRange(body.timestamp);
@@ -449,13 +509,17 @@ export class InteractionsService {
       if (timestampRange.start?.isValid) {
         const startDateUTC = timestampRange.start.toUTC().toJSDate();
 
-        queryBuilder.andWhere('fb.created_at >= :start', { start: startDateUTC });
+        queryBuilder.andWhere('fb.created_at >= :start', {
+          start: startDateUTC,
+        });
       }
 
       if (timestampRange.endExclusive?.isValid) {
         const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
 
-        queryBuilder.andWhere('fb.created_at < :endExclusive', { endExclusive: endDateUTC });
+        queryBuilder.andWhere('fb.created_at < :endExclusive', {
+          endExclusive: endDateUTC,
+        });
       }
       const totalItems = await queryBuilder.getCount();
       queryBuilder.offset(skip).limit(limit);
@@ -481,7 +545,6 @@ export class InteractionsService {
         },
         notifications: [],
       };
-
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -505,7 +568,9 @@ export class InteractionsService {
       const notifications = validateDemographicsRequest(body);
 
       if (body.club_id) {
-        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        const clubs = await this.clubsRepository.findOne({
+          where: { id: body.club_id },
+        });
         if (!clubs) {
           notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
         }
@@ -515,7 +580,7 @@ export class InteractionsService {
         throw new BadRequestException({
           data: null,
           pagination: null,
-          notifications: notifications
+          notifications: notifications,
         });
       }
 
@@ -538,11 +603,15 @@ export class InteractionsService {
         .leftJoin(Clubs, 'c', 'c.id = s.club_id');
 
       if (body.club_id) {
-        queryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+        queryBuilder.andWhere('s.club_id = :club_id', {
+          club_id: body.club_id,
+        });
       }
 
       if (body.session_id) {
-        queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
+        queryBuilder.andWhere('s.session_ref = :session_ref', {
+          session_ref: body.session_id,
+        });
       }
 
       if (body.gender) {
@@ -550,11 +619,15 @@ export class InteractionsService {
       }
 
       if (body.age_range) {
-        queryBuilder.andWhere('df.age_range = :age_range', { age_range: body.age_range });
+        queryBuilder.andWhere('df.age_range = :age_range', {
+          age_range: body.age_range,
+        });
       }
 
       if (body.membership) {
-        queryBuilder.andWhere('df.membership = :membership', { membership: body.membership });
+        queryBuilder.andWhere('df.membership = :membership', {
+          membership: body.membership,
+        });
       }
 
       const timestampRange = parseTimestampRange(body.timestamp);
@@ -562,18 +635,20 @@ export class InteractionsService {
       if (timestampRange.start?.isValid) {
         const startDateUTC = timestampRange.start.toUTC().toJSDate();
 
-        queryBuilder.andWhere('df.created_at >= :start', { start: startDateUTC });
+        queryBuilder.andWhere('df.created_at >= :start', {
+          start: startDateUTC,
+        });
       }
 
       if (timestampRange.endExclusive?.isValid) {
         const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
 
-        queryBuilder.andWhere('df.created_at < :endExclusive', { endExclusive: endDateUTC });
+        queryBuilder.andWhere('df.created_at < :endExclusive', {
+          endExclusive: endDateUTC,
+        });
       }
 
-      queryBuilder
-        .orderBy('df.created_at', 'ASC')
-        .addOrderBy('df.id', 'ASC');
+      queryBuilder.orderBy('df.created_at', 'ASC').addOrderBy('df.id', 'ASC');
 
       const totalItems = await queryBuilder.getCount();
 
@@ -610,7 +685,6 @@ export class InteractionsService {
         },
         notifications: [],
       };
-
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -635,7 +709,9 @@ export class InteractionsService {
       const notifications = validateDemographicsSummaryRequest(body);
 
       if (body.club_id) {
-        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        const clubs = await this.clubsRepository.findOne({
+          where: { id: body.club_id },
+        });
         if (!clubs) {
           notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
         }
@@ -645,7 +721,7 @@ export class InteractionsService {
         throw new BadRequestException({
           data: null,
           pagination: null,
-          notifications: notifications
+          notifications: notifications,
         });
       }
 
@@ -656,7 +732,9 @@ export class InteractionsService {
         .leftJoin(Clubs, 'c', 'c.id = s.club_id');
 
       if (body.club_id) {
-        baseQueryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+        baseQueryBuilder.andWhere('s.club_id = :club_id', {
+          club_id: body.club_id,
+        });
       }
 
       const timestampRange = parseTimestampRange(body.timestamp);
@@ -664,13 +742,17 @@ export class InteractionsService {
       if (timestampRange.start?.isValid) {
         const startDateUTC = timestampRange.start.toUTC().toJSDate();
 
-        baseQueryBuilder.andWhere('df.created_at >= :start', { start: startDateUTC });
+        baseQueryBuilder.andWhere('df.created_at >= :start', {
+          start: startDateUTC,
+        });
       }
 
       if (timestampRange.endExclusive?.isValid) {
         const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
 
-        baseQueryBuilder.andWhere('df.created_at < :endExclusive', { endExclusive: endDateUTC });
+        baseQueryBuilder.andWhere('df.created_at < :endExclusive', {
+          endExclusive: endDateUTC,
+        });
       }
 
       const totalItemsResult = await baseQueryBuilder
@@ -744,7 +826,6 @@ export class InteractionsService {
         },
         notifications: [],
       };
-
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -769,7 +850,9 @@ export class InteractionsService {
       const notifications = validateRoutineFeedbackSummaryRequest(body);
 
       if (body.club_id) {
-        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        const clubs = await this.clubsRepository.findOne({
+          where: { id: body.club_id },
+        });
         if (!clubs) {
           notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
         }
@@ -779,7 +862,7 @@ export class InteractionsService {
         throw new BadRequestException({
           data: null,
           pagination: null,
-          notifications: notifications
+          notifications: notifications,
         });
       }
 
@@ -790,7 +873,9 @@ export class InteractionsService {
         .leftJoin(Clubs, 'c', 'c.id = s.club_id');
 
       if (body.club_id) {
-        baseQueryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+        baseQueryBuilder.andWhere('s.club_id = :club_id', {
+          club_id: body.club_id,
+        });
       }
 
       const timestampRange = parseTimestampRange(body.timestamp);
@@ -798,13 +883,17 @@ export class InteractionsService {
       if (timestampRange.start?.isValid) {
         const startDateUTC = timestampRange.start.toUTC().toJSDate();
 
-        baseQueryBuilder.andWhere('rf.created_at >= :start', { start: startDateUTC });
+        baseQueryBuilder.andWhere('rf.created_at >= :start', {
+          start: startDateUTC,
+        });
       }
 
       if (timestampRange.endExclusive?.isValid) {
         const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
 
-        baseQueryBuilder.andWhere('rf.created_at < :endExclusive', { endExclusive: endDateUTC });
+        baseQueryBuilder.andWhere('rf.created_at < :endExclusive', {
+          endExclusive: endDateUTC,
+        });
       }
 
       const totalItemsResult = await baseQueryBuilder
@@ -828,9 +917,17 @@ export class InteractionsService {
         .getRawMany();
 
       const clubIds = clubRows.map((row) => row.club_id);
-      const routineTypes: RoutineType[] = ['adaptation', 'muscle_gain', 'health', 'fat_burning'];
+      const routineTypes: RoutineType[] = [
+        'adaptation',
+        'muscle_gain',
+        'health',
+        'fat_burning',
+      ];
       const routineCountersByClub = new Map<string, RoutineFeedbackCounters>();
-      const exercisesByClub = new Map<string, Array<{ id: string; name: string; liked: number; disliked: number }>>();
+      const exercisesByClub = new Map<
+        string,
+        Array<{ id: string; name: string; liked: number; disliked: number }>
+      >();
 
       if (clubIds.length > 0) {
         const routineRows = await baseQueryBuilder
@@ -852,10 +949,16 @@ export class InteractionsService {
 
         routineRows.forEach((row) => {
           if (!routineCountersByClub.has(row.club_id)) {
-            routineCountersByClub.set(row.club_id, this.createRoutineFeedbackCounters(routineTypes));
+            routineCountersByClub.set(
+              row.club_id,
+              this.createRoutineFeedbackCounters(routineTypes),
+            );
           }
 
-          this.addRoutineFeedbackCount(routineCountersByClub.get(row.club_id), row);
+          this.addRoutineFeedbackCount(
+            routineCountersByClub.get(row.club_id),
+            row,
+          );
         });
 
         const exerciseRows = await baseQueryBuilder
@@ -896,7 +999,9 @@ export class InteractionsService {
         club_id: row.club_id,
         club_name: row.club_name,
         total_feedback: +row.total_feedback,
-        by_routine_type: routineCountersByClub.get(row.club_id) || this.createRoutineFeedbackCounters(routineTypes),
+        by_routine_type:
+          routineCountersByClub.get(row.club_id) ||
+          this.createRoutineFeedbackCounters(routineTypes),
         by_exercises: exercisesByClub.get(row.club_id) || [],
       }));
 
@@ -912,7 +1017,6 @@ export class InteractionsService {
         },
         notifications: [],
       };
-
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -929,13 +1033,13 @@ export class InteractionsService {
   }
 
   async getEmojiTotal(body: GetEmojiTotalDto) {
-
     try {
-      
       const notifications = validateEmojiRequest(body);
 
       if (body.club_id) {
-        const clubs = await this.clubsRepository.findOne({ where: { id: body.club_id } });
+        const clubs = await this.clubsRepository.findOne({
+          where: { id: body.club_id },
+        });
         if (!clubs) {
           notifications.push(errors.BAD_REQ_GEN('011').notifications[0]);
         }
@@ -945,7 +1049,7 @@ export class InteractionsService {
         throw new BadRequestException({
           data: null,
           pagination: null,
-          notifications: notifications
+          notifications: notifications,
         });
       }
 
@@ -957,18 +1061,22 @@ export class InteractionsService {
           `SUM(CASE WHEN fb.emoji = 'happy' THEN 1 ELSE 0 END) AS happy_count`,
           `SUM(CASE WHEN fb.emoji = 'neutral' THEN 1 ELSE 0 END) AS neutral_count`,
           `SUM(CASE WHEN fb.emoji = 'sad' THEN 1 ELSE 0 END) AS sad_count`,
-          'COUNT(*) AS total_feedbacks'
+          'COUNT(*) AS total_feedbacks',
         ])
         .from(Feedback, 'fb')
         .innerJoin(Sessions, 's', 's.id = fb.session_id')
         .leftJoin(Clubs, 'c', 'c.id = s.club_id');
 
       if (body.club_id) {
-        queryBuilder.andWhere('s.club_id = :club_id', { club_id: body.club_id });
+        queryBuilder.andWhere('s.club_id = :club_id', {
+          club_id: body.club_id,
+        });
       }
 
       if (body.session_id) {
-        queryBuilder.andWhere('s.session_ref = :session_ref', { session_ref: body.session_id });
+        queryBuilder.andWhere('s.session_ref = :session_ref', {
+          session_ref: body.session_id,
+        });
       }
 
       const timestampRange = parseTimestampRange(body.timestamp);
@@ -976,36 +1084,39 @@ export class InteractionsService {
       if (timestampRange.start?.isValid) {
         const startDateUTC = timestampRange.start.toUTC().toJSDate();
 
-        queryBuilder.andWhere('fb.created_at >= :start', { start: startDateUTC });
+        queryBuilder.andWhere('fb.created_at >= :start', {
+          start: startDateUTC,
+        });
       }
 
       if (timestampRange.endExclusive?.isValid) {
         const endDateUTC = timestampRange.endExclusive.toUTC().toJSDate();
 
-        queryBuilder.andWhere('fb.created_at < :endExclusive', { endExclusive: endDateUTC });
+        queryBuilder.andWhere('fb.created_at < :endExclusive', {
+          endExclusive: endDateUTC,
+        });
       }
 
       queryBuilder.groupBy('s.club_id');
       queryBuilder.addGroupBy('c.name');
 
       const rawResults = await queryBuilder.getRawMany();
-      const results = rawResults.map(row => ({
+      const results = rawResults.map((row) => ({
         club_id: row.club_id,
         club_name: row.club_name,
         happy_count: +row.happy_count,
         neutral_count: +row.neutral_count,
         sad_count: +row.sad_count,
-        total_feedbacks: +row.total_feedbacks
-      }))
+        total_feedbacks: +row.total_feedbacks,
+      }));
 
       return {
         data: results,
         pagination: {
           total_items_per_page: results.length,
         },
-        notifications: []
+        notifications: [],
       };
-
     } catch (error) {
       this.logger.error('Error getting emoji total', error);
       if (error instanceof HttpException) {
@@ -1019,19 +1130,21 @@ export class InteractionsService {
         name: 'E_BFF-ROUTINES-500_026',
       });
     }
-
   }
 
   private createRoutineFeedbackCounters(routineTypes: RoutineType[]) {
-    return routineTypes.reduce((counters, routineType) => ({
-      ...counters,
-      [routineType]: {
-        level_1: {},
-        level_2: {},
-        level_3: {},
-        level_4: {},
-      },
-    }), {} as RoutineFeedbackCounters);
+    return routineTypes.reduce(
+      (counters, routineType) => ({
+        ...counters,
+        [routineType]: {
+          level_1: {},
+          level_2: {},
+          level_3: {},
+          level_4: {},
+        },
+      }),
+      {} as RoutineFeedbackCounters,
+    );
   }
 
   private addRoutineFeedbackCount(

@@ -13,7 +13,10 @@ import { Feedback } from './entities/feedback.entity';
 import { FeedbackDBInsert } from './types';
 import { Sessions } from 'src/interactions/entities/sessions.entity';
 import { RoutineFeedbackDto } from './dto/routine-feedback-req.dto';
-import { RoutineFeedback, RoutineFeedbackType } from './entities/routine-feedback.entity';
+import {
+  RoutineFeedback,
+  RoutineFeedbackType,
+} from './entities/routine-feedback.entity';
 import { Exercises } from 'src/common/entities/exercises.entity';
 import { Events } from 'src/interactions/entities/events.entity';
 import { DemographicFormReqDto } from './dto/demographic-form-req.dto';
@@ -32,7 +35,7 @@ export class FeedbackService {
   async create(feedback: FeedbackDBInsert) {
     let feedbackRecord: Feedback;
     const session = await this.sessionsRepository.findOneBy({
-      session_ref: feedback.session_id
+      session_ref: feedback.session_id,
     });
     if (!session) {
       throw new InternalServerErrorException({
@@ -61,7 +64,7 @@ export class FeedbackService {
 
   async addComment(id: UUID, comment: string) {
     const session = await this.sessionsRepository.findOneBy({
-      session_ref: id
+      session_ref: id,
     });
     if (!session) {
       throw new InternalServerErrorException({
@@ -72,8 +75,10 @@ export class FeedbackService {
         name: 'E_BFF-ROUTINES-500_023',
       });
     }
-    console.log(session)
-    const regitry = await this.feedbackRepository.findOneBy({ session_id: session.id });
+    console.log(session);
+    const regitry = await this.feedbackRepository.findOneBy({
+      session_id: session.id,
+    });
     if (!regitry) {
       throw new NotFoundException('registry not found');
     }
@@ -83,7 +88,6 @@ export class FeedbackService {
   }
 
   async createRoutineFeedback(sessionRef: string, body: RoutineFeedbackDto) {
-
     let typeEvent: RoutineFeedbackType = 'feedback_routine';
 
     if (body?.exercise_id) {
@@ -155,8 +159,10 @@ export class FeedbackService {
     }
   }
 
-  async createDemographicData(session_ref: string, body: DemographicFormReqDto) {
-
+  async createDemographicData(
+    session_ref: string,
+    body: DemographicFormReqDto,
+  ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -179,7 +185,8 @@ export class FeedbackService {
         contact_phone: body.contact?.phone ?? null,
         created_at: createdAt,
       });
-      const savedDemographicData = await queryRunner.manager.save(demographicData);
+      const savedDemographicData =
+        await queryRunner.manager.save(demographicData);
 
       const event = queryRunner.manager.create(Events, {
         session_id: session.id,
@@ -198,7 +205,7 @@ export class FeedbackService {
 
       return {
         id: savedDemographicData.id,
-        event_id: savedEvent.id
+        event_id: savedEvent.id,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -209,7 +216,5 @@ export class FeedbackService {
     } finally {
       await queryRunner.release();
     }
-
   }
-
 }

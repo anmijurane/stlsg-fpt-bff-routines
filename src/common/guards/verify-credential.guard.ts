@@ -1,11 +1,18 @@
-import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { ROLES_KEY } from "src/utils/constants";
-import { DataSource } from "typeorm";
-import { Role } from "../entities/role.entity";
-import { Credential } from "../entities/credential.entity";
-import { DateTime } from "luxon";
-import { errors } from "src/utils/catalog.errors";
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { ROLES_KEY } from 'src/utils/constants';
+import { DataSource } from 'typeorm';
+import { Role } from '../entities/role.entity';
+import { Credential } from '../entities/credential.entity';
+import { DateTime } from 'luxon';
+import { errors } from 'src/utils/catalog.errors';
 
 @Injectable()
 export class VerifyCredentialGuard implements CanActivate {
@@ -40,7 +47,7 @@ export class VerifyCredentialGuard implements CanActivate {
       throw new UnauthorizedException(errors.AUTH_002());
     }
 
-    const [ username, accessKey ] = apiKey.split('sk_');
+    const [username, accessKey] = apiKey.split('sk_');
     const queryBuilder = this.dataSource.createQueryBuilder();
     queryBuilder
       .select([
@@ -70,14 +77,20 @@ export class VerifyCredentialGuard implements CanActivate {
     }
 
     const executeDate = DateTime.now().setZone('UTC');
-    if (result.expires_at && DateTime.fromJSDate(result.expires_at) < executeDate) {
+    if (
+      result.expires_at &&
+      DateTime.fromJSDate(result.expires_at) < executeDate
+    ) {
       throw new UnauthorizedException(errors.AUTH_006());
     }
 
     const queryBuilderUpdate = this.dataSource
       .createQueryBuilder()
       .update(Credential)
-      .set({ last_used_at: executeDate.toJSDate(), uses_count: result.uses_count + 1 })
+      .set({
+        last_used_at: executeDate.toJSDate(),
+        uses_count: result.uses_count + 1,
+      })
       .where('username = :username', { username })
       .andWhere('access_key_hash = :accessKey', { accessKey });
 

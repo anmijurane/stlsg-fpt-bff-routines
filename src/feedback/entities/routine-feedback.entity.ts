@@ -1,11 +1,20 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { EventType, RoutineType } from 'src/app-types/interactions';
 import { Exercises } from 'src/common/entities/exercises.entity';
 import { RoutineLevels } from 'src/common/entities/routine_levels.entity';
 import { Sessions } from 'src/interactions/entities/sessions.entity';
 import { PageViews } from 'src/interactions/entities/page_views.entity';
 
-export type RoutineFeedbackType = Extract<EventType, 'feedback_routine' | 'feedback_exercise'>;
+export type RoutineFeedbackType = Extract<
+  EventType,
+  'feedback_routine' | 'feedback_exercise'
+>;
 export type RoutineFeedbackValue = 'liked' | 'disliked';
 
 @Entity('routine_feedback')
